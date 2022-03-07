@@ -1,0 +1,7 @@
+{
+    "conventionalCommits.scopes": [
+        "/api/v1/files",
+        "/api/v1/users",
+        "logger"
+    ]
+}
