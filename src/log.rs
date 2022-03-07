@@ -20,12 +20,10 @@ pub fn warn(message: &str) {
 
 #[allow(dead_code)]
 pub fn error(message: &str) {
-    // print in light red
     println!("\x1b[1;31m[{}] ERROR: {}\x1b[0m", get_time(), message);
 }
 
 #[allow(dead_code)]
 pub fn critical(message: &str) {
-    // print in purple
     println!("\x1b[1;35m[{}] CRITICAL: {}\x1b[0m", get_time(), message);
 }
