@@ -1,8 +1,9 @@
-use actix_web::{web, App, HttpServer};
-use mongodb::{options::ClientOptions, Client, Database};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+
+use actix_web::{App, HttpServer, web};
+use mongodb::{Client, Database, options::ClientOptions};
 use serde::Deserialize;
 
 mod routes;
@@ -16,7 +17,7 @@ pub struct ConfigUser {
 #[derive(Deserialize, Clone)]
 pub struct ConfigFiles {
     storage_path: String,
-    max_upload_size: usize
+    max_upload_size: usize,
 }
 
 #[derive(Deserialize, Clone)]
@@ -46,7 +47,7 @@ impl Config {
 #[derive(Clone)]
 pub struct AppState {
     database: Database,
-    config: Config
+    config: Config,
 }
 
 #[actix_web::main]
@@ -60,7 +61,7 @@ async fn main() -> std::io::Result<()> {
     let _database = client.database(&config.mongo.database);
     let appstate = AppState {
         database: _database,
-        config: config
+        config,
     };
 
     HttpServer::new(move || {
@@ -76,14 +77,14 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/users")
                             .route("", web::post().to(routes::users::create))
                             .route("", web::delete().to(routes::users::delete))
-                ).service(
-                    web::scope("/files")
-                        .route("", web::post().to(routes::files::upload))
+                    ).service(
+                        web::scope("/files")
+                            .route("", web::post().to(routes::files::upload))
+                    )
                 )
             )
-        )
     })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }

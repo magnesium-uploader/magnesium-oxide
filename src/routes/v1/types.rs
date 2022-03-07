@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Serialize, Clone)]
 pub enum Privileges {
     CreateFile,
@@ -40,7 +39,6 @@ impl PartialEq for Privileges {
         }
     }
 }
-
 
 
 #[derive(Serialize)]
@@ -98,7 +96,7 @@ pub struct FileResponse {
 #[derive(Deserialize)]
 pub struct FileGetQuery {
     pub key: String,
-    pub nonce: String
+    pub nonce: String,
 }
 
 #[derive(Deserialize)]

@@ -1,25 +1,24 @@
-use std::io::{Write, Read};
+use std::io::{Read, Write};
+
 use actix_multipart::Multipart;
-use actix_web::{web, Error, HttpResponse, HttpRequest, get};
+use actix_web::{Error, get, HttpRequest, HttpResponse, web};
 use aes_gcm_siv::{
-    aead::{NewAead, Aead},
+    aead::{Aead, NewAead},
     Aes256GcmSiv, Key, Nonce,
 };
 use futures_util::TryStreamExt as _;
+use mongodb::bson::{doc, Document};
 use rand::Rng;
 use sha3::{Digest, Sha3_512};
-use mongodb::bson::{Document, doc};
 
-use crate::log;
-use crate::routes::types::{FileResponse, MessageResponse, FileGetQuery, FileDeleteQuery};
-use crate::routes::utils::check_quota;
 use crate::AppState;
+use crate::log;
+use crate::routes::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};
+use crate::routes::utils::check_quota;
 
-use super::{utils::check_privilege, types::Privileges};
+use super::{types::Privileges, utils::check_privilege};
 
-//define the autorization header
-
-pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {    
+pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {
     log::debug("POST: /api/v1/files/upload");
     let mut res = FileResponse {
         hash: "".to_string(),
@@ -36,8 +35,8 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 
     while let Some(mut field) = payload.try_next().await.unwrap() {
         log::debug("Upload Started");
-        let auth = content.headers().get("authorization").unwrap().to_str().unwrap();        
-        let user = users_collection.find_one(doc!{"api_key": auth.to_string()}, None).await.unwrap();
+        let auth = content.headers().get("authorization").unwrap().to_str().unwrap();
+        let user = users_collection.find_one(doc! {"api_key": auth.to_string()}, None).await.unwrap();
         if user == None {
             return Ok(HttpResponse::Unauthorized().json(MessageResponse {
                 message: "Invalid credentials".to_string(),
@@ -79,7 +78,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             return Ok(HttpResponse::BadRequest().json(MessageResponse {
                 message: "You have reached your quota".to_string(),
             }));
-        } 
+        }
 
         let hash = {
             let mut hasher = Sha3_512::new();
@@ -93,7 +92,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             s
         };
 
-        let doc = doc!{
+        let doc = doc! {
             "hash": &hash,
             "name": filename.to_string(),
             "size": bytes.len() as u32,
@@ -103,13 +102,13 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             "uploader": user.get("_id").unwrap().as_object_id(),
         };
 
-        let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth ,&hash, ".hgo")).unwrap(); //create the file
+        let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth, &hash, ".hgo")).unwrap(); //create the file
 
         log::debug(bytes.len().to_string().as_str());
         let ciphertext = cipher.encrypt(&nonce, bytes.as_ref()).expect("encrypt"); // encrypt the bytes
 
         web::block(move || file.write_all(&ciphertext).map(|_| file)).await??; // write the bytes
-        
+
         let options = mongodb::options::ReplaceOptions::builder()
             .upsert(true)
             .build();
@@ -144,15 +143,15 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
 
-    let file = files_collection.find_one(doc!{"hash": path.0.to_string()}, None).await.unwrap();
+    let file = files_collection.find_one(doc! {"hash": path.0.to_string()}, None).await.unwrap();
     if file == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
         }));
     }
     let file = file.unwrap();
-    
-    let user = users_collection.find_one(doc!{"_id": &file.get("uploader").unwrap().as_object_id().unwrap()}, None).await.unwrap();
+
+    let user = users_collection.find_one(doc! {"_id": &file.get("uploader").unwrap().as_object_id().unwrap()}, None).await.unwrap();
     let deletion_key = base64::decode_config(&query.deletion_key, base64::URL_SAFE_NO_PAD).unwrap();
 
     let file_key = base64::decode_config(file.get("deletion_key").unwrap().as_str().unwrap(), base64::URL_SAFE_NO_PAD).unwrap();
@@ -160,7 +159,7 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
     println!("{:?}", file.get("deletion_key").unwrap().as_str().unwrap());
     println!("{:?}", &query.deletion_key);
 
-    if deletion_key != file_key{
+    if deletion_key != file_key {
         return Ok(HttpResponse::Unauthorized().json(MessageResponse {
             message: "Invalid deletion key".to_string(),
         }));
@@ -184,13 +183,13 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileGetQuery>) -> Result<HttpResponse, Error> {
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
-    
+
     let hash = path.into_inner().0;
     log::debug(format!("GET: /{}", &hash.as_str()).as_str());
     let key = base64::decode_config(&query.key, base64::URL_SAFE_NO_PAD).unwrap();
     let nonce = base64::decode_config(&query.nonce, base64::URL_SAFE_NO_PAD).unwrap();
 
-    let doc = files_collection.find_one(doc!{"hash": hash.to_string()}, None).await.unwrap();
+    let doc = files_collection.find_one(doc! {"hash": hash.to_string()}, None).await.unwrap();
     if doc == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
@@ -199,7 +198,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
 
     let doc = doc.unwrap();
     let uploader = doc.get("uploader").unwrap();
-    let user = users_collection.find_one(doc!{"_id": uploader}, None).await.unwrap();
+    let user = users_collection.find_one(doc! {"_id": uploader}, None).await.unwrap();
 
     let user = user.unwrap();
     let api_key = user.get("api_key").unwrap().as_str().unwrap();

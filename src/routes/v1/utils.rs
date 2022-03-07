@@ -1,7 +1,9 @@
 use std::error::Error;
+
 use bson::Document;
 use futures_util::TryStreamExt;
 use mongodb::bson::doc;
+
 use crate::AppState;
 use crate::routes::types::Privileges;
 
@@ -38,7 +40,7 @@ pub async fn check_privileges(user: &Document, privileges: &[Privileges]) -> Res
         .iter()
         .map(|privilege| privilege.as_str().unwrap())
         .collect::<Vec<&str>>();
-    
+
     let mut _vec: Vec<Privileges> = Vec::new();
 
     for i in user_privileges {
@@ -60,7 +62,7 @@ pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<b
         .iter()
         .map(|privilege| privilege.as_str().unwrap())
         .collect::<Vec<&str>>();
-    
+
     let mut _vec: Vec<Privileges> = Vec::new();
 
     for i in user_privileges {

@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder, Result};
+use actix_web::{HttpResponse, Responder, Result, web};
 use mongodb::{
     bson::{doc, Document},
     Database,
@@ -6,9 +6,9 @@ use mongodb::{
 use regex::Regex;
 use sha3::{Digest, Sha3_512};
 
-use crate::routes::types::{DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse};
 use crate::AppState;
 use crate::log;
+use crate::routes::types::{DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse};
 
 use super::utils::check_privilege;
 
@@ -103,8 +103,7 @@ pub async fn delete(
     let user = user.unwrap();
 
     //? check if the api key has the privilage Privlages::GlobalDeleteUser
-     if check_privilege(&user.clone(),Privileges::GlobalDeleteUser).await? {
-        
+    if check_privilege(&user.clone(), Privileges::GlobalDeleteUser).await? {
         let _result = userscollection
             .delete_one(doc! {"username": &request.username}, None)
             .await
@@ -116,26 +115,25 @@ pub async fn delete(
 
         return Ok(HttpResponse::Ok().json(MessageResponse {
             message: "User deleted".to_string(),
-        }))
+        }));
     }
 
     //? check if the username has the privilage Privlages::DeleteUser
-    if check_privilege(&user,Privileges::DeleteUser).await? {
-
+    if check_privilege(&user, Privileges::DeleteUser).await? {
         let _result = userscollection
             .delete_one(doc! {"username": &request.username}, None)
             .await
             .unwrap();
-        
+
         let _result = web::block(move || {
             std::fs::remove_dir_all(format!("storage/{}", request.api_key)).unwrap()
         });
- 
+
         return Ok(HttpResponse::Ok().json(MessageResponse {
             message: "User deleted".to_string(),
-        }))
+        }));
     }
-    
+
     Ok(HttpResponse::Forbidden().json(MessageResponse {
         message: "You don't have the privileges to delete this user".to_string(),
     }))
