@@ -1,0 +1,22 @@
+[package]
+name = "mercury"
+version = "0.1.0"
+edition = "2021"
+authors = ["Checksum", "Sargon64"]
+
+[dependencies]
+actix-web = "4.0.1"
+mongodb = "2.1.0"
+bson = { version = "2.1.0", features = ["chrono-0_4"] } # Needed for using chrono datetime in doc
+serde = "1.0.89"
+chrono = "0.4.19"
+sha3 = "0.10.1"
+actix-multipart = "0.4"
+futures-util = { version = "0.3.7", default-features = false, features = ["std"] }
+hex-literal = "0.3.4"
+uuid = {version = "0.8.2", features = ["v4"] }
+regex = "1.5.4"
+aes-gcm-siv = "0.10.3"
+rand = "0.8.5"
+base64 = "0.13"
+toml = "0.5.8"
