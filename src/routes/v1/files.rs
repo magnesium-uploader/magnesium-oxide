@@ -15,6 +15,8 @@ use crate::routes::types::{FileResponse, MessageResponse, FileGetQuery, FileDele
 use crate::routes::utils::check_quota;
 use crate::AppState;
 
+use super::{utils::check_privilege, types::Privileges};
+
 //define the autorization header
 
 pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {    
@@ -42,11 +44,16 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             }));
         }
         let user = user.unwrap();
-        // A multipart/form-data stream has to contain `content_disposition`
+
+        if !check_privilege(&user, Privileges::CreateFile).await? {
+            return Ok(HttpResponse::Unauthorized().json(MessageResponse {
+                message: "Your account does not have the required privileges to upload files".to_string(),
+            }));
+        }
+
         let filename = &field.content_disposition().get_filename().unwrap().to_string();
         let content_type = &field.content_type().to_string();
 
-        // File::create is blocking operation, use threadpool
         let mut vec: Vec<i64> = Vec::with_capacity(32);
         for _ in 0..vec.capacity() {
             vec.push(rand::random());
@@ -58,14 +65,8 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         let nonce = Nonce::from(nonce);
         let cipher = Aes256GcmSiv::new(Key::from_slice(&key));
 
-        // create a vector of bytes
-        let mut bytes = Vec::new();
-        
-        // Field in turn is stream of *Bytes* object without borrowing
-        while let Some(chunk) = field.try_next().await? { bytes.extend_from_slice(&chunk); }
-
-        log::debug("Upload Complete");
-
+        let mut bytes = Vec::new(); // create a new vector to store the file
+        while let Some(chunk) = field.try_next().await? { bytes.extend_from_slice(&chunk); } // read the file
         let size = bytes.len();
 
         if size > data.config.files.max_upload_size {
@@ -114,8 +115,8 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             .build();
 
         files_collection.replace_one(doc! {"hash": &hash}, doc, options).await.unwrap();
+
         log::info(format!("{} uploaded {} ({} bytes) [{}]", auth, &filename, &size, &content_type).as_str());
-            
         let nonce = base64::encode_config(&nonce, base64::URL_SAFE_NO_PAD);
         let key = base64::encode_config(&key, base64::URL_SAFE_NO_PAD);
         res = FileResponse {
