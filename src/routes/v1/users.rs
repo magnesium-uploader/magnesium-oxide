@@ -8,7 +8,7 @@ use sha3::{Digest, Sha3_512};
 
 use crate::AppState;
 use crate::log;
-use crate::routes::types::{DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse};
+use crate::routes::v1::types::{DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse};
 
 use super::utils::check_privilege;
 
@@ -17,6 +17,15 @@ pub fn sanatize(s: &str) -> String {
     return re.replace_all(s, "").trim().to_ascii_lowercase();
 }
 
+/// POST: /api/v1/users
+/// 
+/// Create a new user
+/// # Returns:
+///  * `HttpResponse::Created()` - User created
+///  * `HttpResponse::Confict()` - User already exists
+/// # Parameters (JSON body):
+///  * `username` - String
+///  * `password` - String
 pub async fn create(
     data: web::Data<AppState>,
     request: web::Json<UserRequest>,
@@ -83,6 +92,16 @@ pub async fn create(
     }))
 }
 
+/// DELETE: /api/v1/users
+/// 
+/// Delete a user
+/// # Returns:
+/// * `HttpResponse::Ok()` - User deleted
+/// * `HttpResponse::NotFound()` - User not found
+/// * `HttpResponse::Forbidden()` - User does not have sufficient privileges
+/// # Parameters (JSON body):
+/// * `api_key` - String
+/// * `username` - String
 pub async fn delete(
     data: web::Data<AppState>,
     request: web::Json<DeleteRequest>,

@@ -1,5 +1,20 @@
 use serde::{Deserialize, Serialize};
 
+/// User Privlages enum
+/// # Derives:
+/// * `Clone`
+/// * `Serialize`
+/// # Fields:
+/// * `CreateFile` - Create and upload a file
+/// * `DeleteFile` - Delete a file made by the user that created it
+/// * `DeleteUser` - Let the user delete themselves
+/// 
+/// * `GlobalDeleteFile` - Delete any file
+/// * `GlobalDeleteUser` - Delete any user
+/// * `UnlimitedQuota` - Unlimited upload quota
+/// # Implementations:
+/// * `From<Privileges> -> bson::Bson` - Convert a Privlage to bson::Bson
+/// * `PartialEq -> bool` - Check if two Privlages are equal
 #[derive(Serialize, Clone)]
 pub enum Privileges {
     CreateFile,
@@ -11,7 +26,6 @@ pub enum Privileges {
     UnlimitedQuota,
 }
 
-//impl trait bson convert for Privileges
 impl From<Privileges> for bson::Bson {
     fn from(privilege: Privileges) -> bson::Bson {
         match privilege {
@@ -25,7 +39,6 @@ impl From<Privileges> for bson::Bson {
     }
 }
 
-//impl partialeq for privileges
 impl PartialEq for Privileges {
     fn eq(&self, other: &Privileges) -> bool {
         match (self, other) {
@@ -40,7 +53,13 @@ impl PartialEq for Privileges {
     }
 }
 
-
+/// Responce for the POST: /api/v1/users/{user_id} endpoint
+/// # Fields:
+///   * `username` - String
+///   * `password` - String
+///   * `privileges` - Vec<Privileges>
+///   * `api_key` - String
+///   * `created_at` - String
 #[derive(Serialize)]
 pub struct UserResponse {
     pub username: String,
@@ -50,35 +69,43 @@ pub struct UserResponse {
     pub created_at: String,
 }
 
+/// Request (JSON body) for the POST: /api/v1/users/{user_id} endpoint
+/// # Fields:
+///   * `username` - String
+///   * `password` - String
 #[derive(Deserialize)]
 pub struct UserRequest {
     pub username: String,
     pub password: String,
 }
 
+/// General message response
+/// # Fields:
+///   * `message` - String
 #[derive(Serialize)]
 pub struct MessageResponse {
     pub message: String,
 }
 
+/// Request (JSON body) for the DELETE: /api/v1/users/{user_id} endpoint
+/// # Fields:
+///   * `api_key` - String
+///   * `username` - String
 #[derive(Deserialize)]
 pub struct DeleteRequest {
     pub api_key: String,
     pub username: String,
 }
 
-/*
-{"file": {
-    "name": "test.hgo",
-    "hash": "test",
-    "size": "123",
-    "url": "https://localhost:7221/api/v1/storage/download/test?key=test&iv=test"
-    },
-    "key": "test",
-    "nonce": "test"
-}
-*/
-
+/// Response (JSON body) for the POST: /api/v1/files endpoint
+/// # Fields:
+///   * `hash` - String
+///   * `name` - String
+///   * `size` - String
+///   * `url` - String
+///   * `deletion_key` - String
+///   * `key` - String
+///   * `nonce` - String
 #[derive(Serialize, Deserialize)]
 pub struct FileResponse {
     //? File Metadata
@@ -93,12 +120,19 @@ pub struct FileResponse {
     pub nonce: String,
 }
 
+/// Request (Query String) for the GET: /{hash} endpoint
+/// # Fields:
+///   * `key` - String
+///   * `nonce` - String
 #[derive(Deserialize)]
 pub struct FileGetQuery {
     pub key: String,
     pub nonce: String,
 }
 
+/// Request (Query String) for the DELETE: /{hash} endpoint
+/// # Fields:
+///   * `deletion_key` - String
 #[derive(Deserialize)]
 pub struct FileDeleteQuery {
     pub deletion_key: String,

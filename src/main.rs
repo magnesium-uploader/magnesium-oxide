@@ -67,19 +67,19 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(appstate.clone()))
-            .service(routes::files::get_file)
-            .service(routes::files::delete_file)
+            .service(routes::v1::files::get_file)
+            .service(routes::v1::files::delete_file)
             .service(
                 // Create two scopes
                 // outline: /api/v1/{users or files}                
                 web::scope("/api").service(
                     web::scope("/v1").service(
                         web::scope("/users")
-                            .route("", web::post().to(routes::users::create))
-                            .route("", web::delete().to(routes::users::delete))
+                            .route("", web::post().to(routes::v1::users::create))
+                            .route("", web::delete().to(routes::v1::users::delete))
                     ).service(
                         web::scope("/files")
-                            .route("", web::post().to(routes::files::upload))
+                            .route("", web::post().to(routes::v1::files::upload))
                     )
                 )
             )

@@ -13,13 +13,24 @@ use sha3::{Digest, Sha3_512};
 
 use crate::AppState;
 use crate::log;
-use crate::routes::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};
-use crate::routes::utils::check_quota;
+use crate::routes::v1::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};
+use crate::routes::v1::utils::check_quota;
 
 use super::{types::Privileges, utils::check_privilege};
 
+/// POST: /api/v1/files
+/// 
+/// Upload and encrypt a file with AES256-GCM-SIV
+/// # Returns:
+/// * `HttpResponse::Created()` - File uploaded
+/// * `HttpResponse::Unauthorized()` - User does not have the correct privileges OR Creditentials are missing/invalid
+/// * `HttpResponse::BadRequest()` - File is too large OR User has met their quota OR No file was uploaded
+/// # Parameters (Multipart form):
+/// * `file` - File to upload
+/// # Headers:
+/// * `Authorization` - A string that contains the user's API key
 pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {
-    log::debug("POST: /api/v1/files/upload");
+    log::debug("POST: /api/v1/files");
     let mut res = FileResponse {
         hash: "".to_string(),
         name: "".to_string(),
@@ -136,7 +147,15 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
     Ok(HttpResponse::Created().json(res))
 }
 
-// /api/v1/files/{hash}/delete/?deletekey={deletekey}
+/// GET: /{hash}/delete/
+/// 
+/// Deletes a file from the database and the file storage
+/// # Returns:
+/// * `HttpResponse::Ok()` - File deleted successfully
+/// * `HttpResponse::NotFound()` - File not found
+/// * `HttpResponse::Unauthorized()` - Invalid deletion key
+/// # Parameters (Query String):
+/// * `deletion_key` - Deletion key
 #[get("/{hash}/delete")]
 pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileDeleteQuery>) -> Result<HttpResponse, Error> {
     log::debug(&format!("GET: /api/v1/files/{}/delete", path.0).to_string());
@@ -178,7 +197,15 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
     Ok(HttpResponse::Ok().body("Successfully deleted"))
 }
 
-// /api/v1/files/{hash}?key={key}&nonce={nonce}
+/// GET: /{hash}
+/// 
+/// Decrypts a file and returns it
+/// # Returns:
+/// * `HttpResponse::Ok()` - File decrypted and uploaded successfully
+/// * `HttpResponse::NotFound()` - File not found
+/// # Parameters (Query String):
+/// * `key` - File key
+/// * `nonce` - File nonce
 #[get("/{hash}")]
 pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileGetQuery>) -> Result<HttpResponse, Error> {
     let files_collection = data.database.collection::<Document>("files");

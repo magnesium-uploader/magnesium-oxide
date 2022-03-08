@@ -5,8 +5,15 @@ use futures_util::TryStreamExt;
 use mongodb::bson::doc;
 
 use crate::AppState;
-use crate::routes::types::Privileges;
+use crate::routes::v1::types::Privileges;
 
+/// Check the users quota
+/// # Returns:
+/// * `Result<bool, Box<dyn Error>>` - A result containing the a boolean indicating if the user has enough quota
+/// # Parameters:
+/// * `data` - A reference to the application state
+/// * `user` - A bson document containing the user's information
+/// * `upload_size` - The size of the file to be uploaded
 pub async fn check_quota(data: &AppState, user: &Document, upload_size: usize) -> Result<bool, Box<dyn Error>> {
     if check_privilege(user, Privileges::UnlimitedQuota).await? {
         return Ok(true);
@@ -34,6 +41,13 @@ pub async fn check_quota(data: &AppState, user: &Document, upload_size: usize) -
 }
 
 //its in the box now.
+
+/// Check multiple privileges
+/// # Returns:
+/// * `Result<bool, Box<dyn Error>>` - A result containing the a boolean indicating if the user has the privilege
+/// # Parameters:
+/// * `user` - A bson document containing the user's information
+/// * `privilege` - An array of privileges to check against the user's privileges
 #[allow(dead_code)]
 pub async fn check_privileges(user: &Document, privileges: &[Privileges]) -> Result<bool, Box<dyn Error>> {
     let user_privileges = user.get_array("privileges").unwrap()
@@ -57,6 +71,12 @@ pub async fn check_privileges(user: &Document, privileges: &[Privileges]) -> Res
     Ok(true)
 }
 
+/// Check a single privilege (use check_privileges for multiple privileges)
+/// # Returns:
+/// * `Result<bool, Box<dyn Error>>` - A result containing the a boolean indicating if the user has the privilege
+/// # Parameters:
+/// * `user` - A bson document containing the user's information
+/// * `privilege` - A single privilege to check against the user's privileges
 pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<bool, Box<dyn Error>> {
     let user_privileges = user.get_array("privileges").unwrap()
         .iter()
@@ -76,7 +96,11 @@ pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<b
     Ok(true)
 }
 
-//function to typecast &str to Privlage
+/// Typecast a string to a Privilege
+/// # Returns:
+/// * `Privileges` - A Privilege
+/// # Parameters:
+/// * `privilege` - A string repersenation of a Privilege
 #[allow(dead_code)] // error: box too large
 pub fn str_to_privilege(privilege: &str) -> Privileges {
     match privilege {
