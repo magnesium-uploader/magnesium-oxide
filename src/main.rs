@@ -53,11 +53,27 @@ pub struct AppState {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Parse a connection string into an options struct.
-    let config = Config::new("config.toml").unwrap();
-    let client_options = ClientOptions::parse(&config.mongo.uri)
-        .await
-        .unwrap();
-    let client = Client::with_options(client_options).unwrap();
+    let config = match Config::new("config.toml") {
+        Ok(config) => {config},
+        Err(_) => {
+            log::critical("Could not parse config.toml");
+            std::process::exit(1);
+        },
+    };
+    let client_options = match ClientOptions::parse(&config.mongo.uri).await {
+        Ok(client_options) => {client_options},
+        Err(_) => {
+            log::critical("Could not parse mongo uri");
+            std::process::exit(1);
+        },
+    };
+    let client = match Client::with_options(client_options) {
+        Ok(client) => {client},
+        Err(_) => {
+            log::critical("Could not connect to mongo");
+            std::process::exit(1);
+        },
+    };
     let _database = client.database(&config.mongo.database);
     let appstate = AppState {
         database: _database,
