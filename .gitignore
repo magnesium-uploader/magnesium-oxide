@@ -14,3 +14,8 @@ config.toml
 
 # Storage
 storage/
+
+# Build artifacts
+macos-latest/
+ubuntu-latest/
+windows-latest/
