@@ -32,7 +32,6 @@ use super::{types::Privileges, utils::check_privilege};
 pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {
     log::debug("POST: /api/v1/files");
     let mut res = FileResponse {
-        hash: "".to_string(),
         name: "".to_string(),
         size: "".to_string(),
         deletion_key: "".to_string(),
@@ -62,6 +61,9 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         }
 
         let filename = &field.content_disposition().get_filename().unwrap().to_string();
+        let file_ext_regex = regex::Regex::new(r"(?i)^.*\.([a-z]{1,5})$").unwrap();
+        let file_ext = file_ext_regex.captures(filename).unwrap().get(1).unwrap().as_str();
+        log::debug(&filename);
         let content_type = &field.content_type().to_string();
 
         let mut vec: Vec<i64> = Vec::with_capacity(32);
@@ -116,7 +118,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth, &hash, ".hgo")).unwrap(); //create the file
 
         log::debug(bytes.len().to_string().as_str());
-        let ciphertext = cipher.encrypt(&nonce, bytes.as_ref()).expect("encrypt"); // encrypt the bytes
+        let ciphertext = cipher.encrypt(&nonce, bytes.as_ref()).unwrap(); // encrypt the bytes
 
         web::block(move || file.write_all(&ciphertext).map(|_| file)).await??; // write the bytes
 
@@ -129,11 +131,11 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         log::info(format!("{} uploaded {} ({} bytes) [{}]", auth, &filename, &size, &content_type).as_str());
         let nonce = base64::encode_config(&nonce, base64::URL_SAFE_NO_PAD);
         let key = base64::encode_config(&key, base64::URL_SAFE_NO_PAD);
+
         res = FileResponse {
-            name: format!("{}.hgo", &hash),
-            hash,
+            name: format!("{}.{}", &hash, file_ext),
             size: bytes.len().to_string(),
-            url: "http://localhost:8080".to_string(),
+            url: "http://localhost:23854".to_string(),
             deletion_key,
             key,
             nonce,
@@ -212,11 +214,12 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let users_collection = data.database.collection::<Document>("users");
 
     let hash = path.into_inner().0;
-    log::debug(format!("GET: /{}", &hash.as_str()).as_str());
+    let parsed_hash = &hash.split(".").collect::<Vec<&str>>()[0];
+    log::debug(&format!("GET: /api/v1/files/{}", hash).to_string());
     let key = base64::decode_config(&query.key, base64::URL_SAFE_NO_PAD).unwrap();
     let nonce = base64::decode_config(&query.nonce, base64::URL_SAFE_NO_PAD).unwrap();
 
-    let doc = files_collection.find_one(doc! {"hash": hash.to_string()}, None).await.unwrap();
+    let doc = files_collection.find_one(doc! {"hash": &parsed_hash}, None).await.unwrap();
     if doc == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
@@ -230,7 +233,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let user = user.unwrap();
     let api_key = user.get("api_key").unwrap().as_str().unwrap();
 
-    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &hash, ".hgo")).unwrap();
+    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &parsed_hash, ".hgo")).unwrap();
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).unwrap();
 

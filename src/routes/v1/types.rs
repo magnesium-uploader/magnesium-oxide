@@ -99,7 +99,6 @@ pub struct DeleteRequest {
 
 /// Response (JSON body) for the POST: /api/v1/files endpoint
 /// # Fields:
-///   * `hash` - String
 ///   * `name` - String
 ///   * `size` - String
 ///   * `url` - String
@@ -109,7 +108,6 @@ pub struct DeleteRequest {
 #[derive(Serialize, Deserialize)]
 pub struct FileResponse {
     //? File Metadata
-    pub hash: String,
     pub name: String,
     pub size: String,
     pub url: String,

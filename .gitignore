@@ -12,6 +12,9 @@ Cargo.lock
 # Configuration
 config.toml
 
+# Key file
+oxide.key
+
 # Storage
 storage/
 
