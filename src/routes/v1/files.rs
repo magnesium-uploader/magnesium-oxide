@@ -1,7 +1,7 @@
-use std::io::{Read, Write};
+use std::{io::{Read, Write}, slice::SliceIndex};
 
 use actix_multipart::Multipart;
-use actix_web::{Error, get, HttpRequest, HttpResponse, web};
+use actix_web::{Error, get, HttpRequest, HttpResponse, web, http::header};
 use aes_gcm_siv::{
     aead::{Aead, NewAead},
     Aes256GcmSiv, Key, Nonce,
@@ -135,7 +135,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         res = FileResponse {
             name: format!("{}.{}", &hash, file_ext),
             size: bytes.len().to_string(),
-            url: "http://localhost:23854".to_string(),
+            url: data.config.network.return_address.to_string(),
             deletion_key,
             key,
             nonce,
@@ -244,5 +244,8 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let nonce = Nonce::from(nonce);
     let plaintext = cipher.decrypt(&nonce, bytes.as_ref()).expect("decrypt");
 
-    Ok(HttpResponse::Ok().content_type(doc.get("type").unwrap().as_str().unwrap()).body(plaintext))
+    Ok(HttpResponse::Ok()
+    .insert_header(("Content-Disposition", format!("filename={}", doc.get("name").unwrap().as_str().unwrap())))
+    .content_type(doc.get("type").unwrap().as_str().unwrap())
+    .body(plaintext))
 }
