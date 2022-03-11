@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target }}
-          path: ${{ matrix.target }}/debug/hello_world${{ matrix.type }}
+          path: ${{ matrix.target }}/debug/mercury${{ matrix.type }}
 
       - name: Conventional Changelog Action
         id: changelog
