@@ -11,7 +11,7 @@ pub struct ConfigNetwork {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct ConfigUser {
+pub struct ConfigUsers {
     pub default_user_quota: usize,
 }
 
@@ -29,18 +29,18 @@ pub struct ConfigMongo {
 
 #[derive(Deserialize, Clone)]
 pub struct Config {
-    pub mongo: ConfigMongo,
-    pub files: ConfigFiles,
-    pub users: ConfigUser,
     pub network: ConfigNetwork,
+    pub users: ConfigUsers,
+    pub files: ConfigFiles,
+    pub mongo: ConfigMongo,
 }
 
 impl Config {
     pub fn new(file_path: &str) -> Result<Config, Box<dyn Error>> {
-        let mut config_file = File::open(file_path)?;
-        let mut config_str = String::new();
-        config_file.read_to_string(&mut config_str)?;
-        let config: Config = toml::from_str(&config_str)?;
+        let mut file = File::open(file_path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        let config: Config = toml::from_str(&contents)?;
         Ok(config)
     }
 }
