@@ -26,12 +26,12 @@ jobs:
           profile: minimal
           toolchain: stable
 
+      - uses: Swatinem/rust-cache@v1
+
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
           command: check
-
-      - uses: Swatinem/rust-cache@v1
 
       - name: Get Mercury version
         id: semver
@@ -48,11 +48,10 @@ jobs:
 
       - name: "Build Mercury"
         run: |
-          cargo build --target ${{ matrix.target }}
-          cp target/${{ matrix.target }}/debug/mercury ${{ env.HOME }}/mercury
+          cargo build
 
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.target }}
-          path: ${{ env.HOME }}/mercury
+          name: mercury-oxide (${{ matrix.target }})
+          path: target/debug/mercury-oxide${{ matrix.type }}
