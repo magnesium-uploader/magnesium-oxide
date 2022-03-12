@@ -12,11 +12,9 @@ jobs:
       matrix:
         include:
           - target: windows-latest
-            type: ".exe"
+            custom_type: ".exe"
           - target: ubuntu-latest
-            type: ""
           - target: macos-latest
-            type: ""
 
     runs-on: ${{ matrix.target }}
     steps:
@@ -41,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: mercury-oxide (${{ matrix.target }})
-          path: target/debug/mercury-oxide${{ matrix.type }}
+          path: target/debug/mercury-oxide/mercury-oxide{{ matrix.custom_type || "" }}
