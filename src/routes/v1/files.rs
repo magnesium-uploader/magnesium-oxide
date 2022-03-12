@@ -158,13 +158,18 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 /// * `HttpResponse::Unauthorized()` - Invalid deletion key
 /// # Parameters (Query String):
 /// * `deletion_key` - Deletion key
-#[get("/{hash}/delete")]
+#[get("/{name}/delete")]
 pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileDeleteQuery>) -> Result<HttpResponse, Error> {
-    log::debug(&format!("GET: /api/v1/files/{}/delete", path.0).to_string());
+    log::debug(&format!("GET: /api/v1/files/{}/delete", &path.0).to_string());
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
 
-    let file = files_collection.find_one(doc! {"hash": path.0.to_string()}, None).await.unwrap();
+    let path = path.0.clone();
+
+    let name = path.split(".").next().unwrap().to_string();
+    let hash = name;
+
+    let file = files_collection.find_one(doc! {"hash": &hash}, None).await.unwrap();
     if file == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
@@ -188,13 +193,13 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 
     let user = user.unwrap();
 
-    println!("{}", format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &path.0));
+    println!("{}", format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
 
-    let _path = path.clone();
+    let _hash = hash.clone();
 
-    web::block(move || std::fs::remove_file(format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &path.0))).await??;
+    web::block(move || std::fs::remove_file(format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash))).await??;
 
-    files_collection.delete_one(doc! {"hash": &_path.0.to_string()}, None).await.unwrap();
+    files_collection.delete_one(doc! {"hash": &_hash.to_string()}, None).await.unwrap();
 
     Ok(HttpResponse::Ok().body("Successfully deleted"))
 }
@@ -208,14 +213,14 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 /// # Parameters (Query String):
 /// * `key` - File key
 /// * `nonce` - File nonce
-#[get("/{hash}")]
+#[get("/{name}")]
 pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileGetQuery>) -> Result<HttpResponse, Error> {
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
 
-    let hash = path.into_inner().0;
-    let parsed_hash = &hash.split(".").collect::<Vec<&str>>()[0];
-    log::debug(&format!("GET: /api/v1/files/{}", hash).to_string());
+    let name = path.into_inner().0;
+    let parsed_hash = &name.split(".").collect::<Vec<&str>>()[0];
+    log::debug(&format!("GET: /api/v1/files/{}", name).to_string());
     let key = base64::decode_config(&query.key, base64::URL_SAFE_NO_PAD).unwrap();
     let nonce = base64::decode_config(&query.nonce, base64::URL_SAFE_NO_PAD).unwrap();
 
