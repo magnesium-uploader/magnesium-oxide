@@ -1,4 +1,4 @@
-name: Build Mercury
+name: Build
 
 on:
   push:
@@ -20,11 +20,18 @@ jobs:
 
     runs-on: ${{ matrix.target }}
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
 
-      - name: "Cache"
-        uses: Swatinem/rust-cache@v1
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - uses: Swatinem/rust-cache@v1
 
       - name: Get Mercury version
         id: semver
@@ -33,17 +40,19 @@ jobs:
           token: ${{ github.token }}
           branch: main
 
-      - name: "Build Mercury"
-        run: cargo build --target-dir ${{ matrix.target }} --verbose
-
-      - name: "Upload artifacts"
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: ${{ matrix.target }}/debug/mercury${{ matrix.type }}
-
       - name: Conventional Changelog Action
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Build Mercury"
+        run: |
+          cargo build --target ${{ matrix.target }}
+          cp target/${{ matrix.target }}/debug/mercury ${{ env.HOME }}/mercury
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ env.HOME }}/mercury
