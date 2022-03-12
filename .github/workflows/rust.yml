@@ -33,19 +33,6 @@ jobs:
         with:
           command: check
 
-      - name: Get Mercury version
-        id: semver
-        uses: ietf-tools/semver-action@v1
-        with:
-          token: ${{ github.token }}
-          branch: main
-
-      - name: Conventional Changelog Action
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: "Build Mercury"
         run: |
           cargo build
