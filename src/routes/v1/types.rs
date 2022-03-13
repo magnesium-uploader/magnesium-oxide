@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// * `CreateFile` - Create and upload a file
 /// * `DeleteFile` - Delete a file made by the user that created it
 /// * `DeleteUser` - Let the user delete themselves
-/// 
+///
 /// * `GlobalDeleteFile` - Delete any file
 /// * `GlobalDeleteUser` - Delete any user
 /// * `UnlimitedQuota` - Unlimited upload quota
@@ -105,7 +105,7 @@ pub struct DeleteRequest {
 ///   * `deletion_key` - String
 ///   * `key` - String
 ///   * `nonce` - String
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
     //? File Metadata
     pub name: String,

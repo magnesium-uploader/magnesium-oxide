@@ -1,0 +1,42 @@
+name: Build Dev
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        include:
+          - target: windows-latest
+            custom_type: ".exe"
+          - target: ubuntu-latest
+          - target: macos-latest
+
+    runs-on: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+      - name: "Build Magnesium"
+        run: |
+          cargo build
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v3
+        with:
+          name: magnesium-oxide (${{ matrix.target }})
+          path: target/debug/magnesium-oxide${{ matrix.custom_type || '' }}

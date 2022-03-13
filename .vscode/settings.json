@@ -4,6 +4,7 @@
         "/api/v1/users",
         "logger",
         "meta",
-        "config"
+        "config",
+        "crypto"
     ]
 }
