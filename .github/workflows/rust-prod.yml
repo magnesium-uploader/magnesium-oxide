@@ -47,7 +47,7 @@ jobs:
 
       - name: "Deploy Magnesium"
         run: |
-          scp target/debug/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/
+          rsync -avz target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/
 
       - name: "Start Magnesium"
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ${{ secrets.SSH_PASSWORD }} | sudo --stdin -- bash -c 'systemctl start magnesium'"
