@@ -31,12 +31,12 @@ jobs:
         with:
           command: check
 
-      - name: "Build Mercury"
+      - name: "Build Magnesium"
         run: |
           cargo build
 
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v3
         with:
-          name: mercury-oxide (${{ matrix.target }})
-          path: target/debug/mercury-oxide${{ matrix.custom_type || '' }}
+          name: magnesium-oxide (${{ matrix.target }})
+          path: target/debug/magnesium-oxide${{ matrix.custom_type || '' }}

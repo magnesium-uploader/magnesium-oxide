@@ -4,7 +4,7 @@ use mongodb::{options::ClientOptions, Client, Database};
 mod log;
 mod routes;
 mod config;
-mod crypter;
+mod crypto;
 
 use config::Config;
 
@@ -49,27 +49,16 @@ async fn main() -> std::io::Result<()> {
     };
 
     match HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(appstate.clone()))
-            .service(routes::v1::files::get_file)
-            .service(routes::v1::files::delete_file)
-            .service(
-                web::scope("/api").service(
-                    web::scope("/v1")
-                        .service(
-                            web::scope("/users")
-                                .route("", web::post().to(routes::v1::users::create))
-                                .route("", web::delete().to(routes::v1::users::delete)),
-                        )
-                        .service(
-                            web::scope("/files")
-                                .route("", web::post().to(routes::v1::files::upload)),
-                        ),
+        App::new().app_data(web::Data::new(appstate.clone())).service(routes::v1::files::get_file).service(routes::v1::files::delete_file).service(
+            web::scope("/api").service(
+                web::scope("/v1").service(
+                    web::scope("/users").route("", web::post().to(routes::v1::users::create)).route("", web::delete().to(routes::v1::users::delete)),
+                ).service(
+                    web::scope("/files").route("", web::post().to(routes::v1::files::upload)),
                 ),
-            )
-    })
-    .bind((config.network.bind_address.to_string().as_str().clone(), config.network.bind_port.clone()))
-    {
+            ),
+        )
+    }).bind((config.network.bind_address.to_string().as_str().clone(), config.network.bind_port.clone())) {
         Ok(o) => {
             log::info("Server started");
             o.run().await

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// * `CreateFile` - Create and upload a file
 /// * `DeleteFile` - Delete a file made by the user that created it
 /// * `DeleteUser` - Let the user delete themselves
-/// 
+///
 /// * `GlobalDeleteFile` - Delete any file
 /// * `GlobalDeleteUser` - Delete any user
 /// * `UnlimitedQuota` - Unlimited upload quota

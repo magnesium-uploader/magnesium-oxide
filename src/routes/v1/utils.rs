@@ -97,41 +97,41 @@ pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<b
 }
 
 const ZWS: [char; 16] = [
-  '\u{e006c}', // 0
-  '\u{e006d}', // 1
-  '\u{e006e}', // 2
-  '\u{e006f}', // 3
-  '\u{e0070}', // 4
-  '\u{e0071}', // 5 
-  '\u{e0072}', // 6
-  '\u{e0073}', // 7
-  '\u{e0074}', // 8
-  '\u{e0075}', // 9
-  '\u{e0076}', // A
-  '\u{e0077}', // B
-  '\u{e0078}', // C
-  '\u{e0079}', // D
-  '\u{e007a}', // E
-  '\u{e007f}', // F
+    '\u{e006c}', // 0
+    '\u{e006d}', // 1
+    '\u{e006e}', // 2
+    '\u{e006f}', // 3
+    '\u{e0070}', // 4
+    '\u{e0071}', // 5
+    '\u{e0072}', // 6
+    '\u{e0073}', // 7
+    '\u{e0074}', // 8
+    '\u{e0075}', // 9
+    '\u{e0076}', // A
+    '\u{e0077}', // B
+    '\u{e0078}', // C
+    '\u{e0079}', // D
+    '\u{e007a}', // E
+    '\u{e007f}', // F
 ];
 
 const CHARS: [char; 16] = [
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  'a',
-  'b',
-  'c',
-  'd',
-  'e',
-  'f',
+    '0',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
 ];
 
 pub fn base64_to_zws(input: &str) -> String {
@@ -161,7 +161,7 @@ pub fn zws_to_base64(input: &str) -> String {
 
     let mut string = String::new();
     for i in (0..hex.len()).step_by(2) {
-        let byte = u8::from_str_radix(&hex[i..i+2], 16).unwrap();
+        let byte = u8::from_str_radix(&hex[i..i + 2], 16).unwrap();
         string.push(byte as char);
     }
 

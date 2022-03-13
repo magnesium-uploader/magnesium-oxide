@@ -15,6 +15,12 @@ config.toml
 # Key file
 oxide.key
 
+# VScode
+.vscode/
+
+# Idea
+.idea/
+
 # Storage
 storage/
 

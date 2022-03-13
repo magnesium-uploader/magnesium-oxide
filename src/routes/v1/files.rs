@@ -23,7 +23,7 @@ use super::{types::Privileges, utils::check_privilege};
 /// Upload and encrypt a file with AES256-GCM-SIV
 /// # Returns:
 /// * `HttpResponse::Created()` - File uploaded
-/// * `HttpResponse::Unauthorized()` - User does not have the correct privileges OR Creditentials are missing/invalid
+/// * `HttpResponse::Unauthorized()` - User does not have the correct privileges OR Credentials are missing/invalid
 /// * `HttpResponse::BadRequest()` - File is too large OR User has met their quota OR No file was uploaded
 /// # Parameters (Multipart form):
 /// * `file` - File to upload

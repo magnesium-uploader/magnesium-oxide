@@ -1,7 +1,8 @@
-use serde::Deserialize;
-use std::io::Read;
-use std::fs::File;
 use std::error::Error;
+use std::fs::File;
+use std::io::Read;
+
+use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
 pub struct ConfigNetwork {

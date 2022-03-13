@@ -18,7 +18,7 @@ pub fn sanatize(s: &str) -> String {
 }
 
 /// POST: /api/v1/users
-/// 
+///
 /// Create a new user
 /// # Returns:
 ///  * `HttpResponse::Created()` - User created
@@ -93,7 +93,7 @@ pub async fn create(
 }
 
 /// DELETE: /api/v1/users
-/// 
+///
 /// Delete a user
 /// # Returns:
 /// * `HttpResponse::Ok()` - User deleted

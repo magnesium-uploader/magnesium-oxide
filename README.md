@@ -1,15 +1,3 @@
-# Mercury (oxide)
+# Magnesium (oxide)
 
-You put the errors in a box!
-
-           +--------------+
-          /|             /|
-         / |            / |
-        *--+-----------*  |
-        |  |           |  |
-        |  |   Error   |  |
-        |  |           |  |
-        |  +-----------+--+
-        | /            | /
-        |/             |/
-        *--------------*
+- Documentation coming soon.
