@@ -105,7 +105,7 @@ pub struct DeleteRequest {
 ///   * `deletion_key` - String
 ///   * `key` - String
 ///   * `nonce` - String
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FileResponse {
     //? File Metadata
     pub name: String,

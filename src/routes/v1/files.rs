@@ -133,14 +133,24 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         let key = base64::encode_config(&key, base64::URL_SAFE_NO_PAD);
 
         res = FileResponse {
-            name: format!("{}.{}", &hash, file_ext),
+            name: format!("{}.{}", &hash, &file_ext),
             size: bytes.len().to_string(),
             url: data.config.network.return_address.to_string(),
             deletion_key,
             key,
             nonce,
+        };
+
+        if let Some(zws) = content.headers().get("zws") { // check discord owo
+            if zws.to_str().unwrap() == "true" {
+                res.name = format!("\u{200d}{}.{}", super::utils::base64_to_zws(&hash), file_ext);
+                res.key = super::utils::base64_to_zws(&res.key);
+                res.nonce = super::utils::base64_to_zws(&res.nonce);
+            }
         }
     }
+
+    println!("{:?}", &res);
     if res.size == "" {
         return Ok(HttpResponse::BadRequest().json(MessageResponse {
             message: "No file uploaded".to_string(),
@@ -166,8 +176,12 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 
     let path = path.0.clone();
 
-    let name = path.split(".").next().unwrap().to_string();
-    let hash = name;
+    let mut hash = path.split(".").next().unwrap().to_string();
+
+    if hash.chars().nth(0).unwrap() == '\u{200d}' {
+        hash.remove(0);
+        hash = super::utils::zws_to_base64(&hash);
+    }
 
     let file = files_collection.find_one(doc! {"hash": &hash}, None).await.unwrap();
     if file == None {
@@ -218,13 +232,28 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
 
-    let name = path.into_inner().0;
-    let parsed_hash = &name.split(".").collect::<Vec<&str>>()[0];
-    log::debug(&format!("GET: /api/v1/files/{}", name).to_string());
-    let key = base64::decode_config(&query.key, base64::URL_SAFE_NO_PAD).unwrap();
-    let nonce = base64::decode_config(&query.nonce, base64::URL_SAFE_NO_PAD).unwrap();
+    let path = path.0.clone();
 
-    let doc = files_collection.find_one(doc! {"hash": &parsed_hash}, None).await.unwrap();
+    let mut hash = path.split(".").next().unwrap().to_string();
+    let mut key = query.key.clone();
+    let mut nonce = query.nonce.clone();
+
+    drop(query);
+
+    if hash.chars().nth(0).unwrap() == '\u{200d}' {
+        hash.remove(0);
+        hash = super::utils::zws_to_base64(&hash);
+        key = super::utils::zws_to_base64(&key);
+        nonce = super::utils::zws_to_base64(&nonce);
+    }
+
+    log::debug(&key);
+
+    log::debug(&format!("GET: /api/v1/files/{}", path).to_string());
+    let key = base64::decode_config(key, base64::URL_SAFE_NO_PAD).unwrap();
+    let nonce = base64::decode_config(nonce, base64::URL_SAFE_NO_PAD).unwrap();
+
+    let doc = files_collection.find_one(doc! {"hash": &hash}, None).await.unwrap();
     if doc == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
@@ -238,7 +267,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let user = user.unwrap();
     let api_key = user.get("api_key").unwrap().as_str().unwrap();
 
-    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &parsed_hash, ".hgo")).unwrap();
+    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &hash, ".hgo")).unwrap();
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).unwrap();
 
