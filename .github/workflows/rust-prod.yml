@@ -46,9 +46,9 @@ jobs:
 
       - name: "Deploy with RSync"
         run: |
-          rsync -avz target/debug/magnesium-oxide ${{ secrets.SSH_USER }}@${{{ secrets.SSH_HOST }}}:/srv/magnesium-oxide/
+          rsync -avz target/debug/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/
 
-      - run: ssh ${{ secrets.SSH_USER }}@${{{ secrets.SSH_HOST }}} "cd /srv/magnesium-oxide && systemctl start magnesium-oxide"
+      - run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /srv/magnesium-oxide && systemctl start magnesium-oxide"
 
       - name: "Upload artifacts"
         uses: actions/upload-artifact@v3
