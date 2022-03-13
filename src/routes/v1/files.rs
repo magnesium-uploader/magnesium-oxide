@@ -1,7 +1,7 @@
-use std::{io::{Read, Write}, slice::SliceIndex};
+use std::io::{Read, Write};
 
 use actix_multipart::Multipart;
-use actix_web::{Error, get, HttpRequest, HttpResponse, web, http::header};
+use actix_web::{Error, get, HttpRequest, HttpResponse, web};
 use aes_gcm_siv::{
     aead::{Aead, NewAead},
     Aes256GcmSiv, Key, Nonce,
@@ -29,6 +29,7 @@ use super::{types::Privileges, utils::check_privilege};
 /// * `file` - File to upload
 /// # Headers:
 /// * `Authorization` - A string that contains the user's API key
+/// * `zws` - Whether or not to use zws
 pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: HttpRequest) -> Result<HttpResponse, Error> {
     log::debug("POST: /api/v1/files");
     let mut res = FileResponse {
@@ -44,7 +45,6 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
     let users_collection = data.database.collection::<Document>("users");
 
     while let Some(mut field) = payload.try_next().await.unwrap() {
-        log::debug("Upload Started");
         let auth = content.headers().get("authorization").unwrap().to_str().unwrap();
         let user = users_collection.find_one(doc! {"api_key": auth.to_string()}, None).await.unwrap();
         if user == None {
@@ -63,7 +63,6 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         let filename = &field.content_disposition().get_filename().unwrap().to_string();
         let file_ext_regex = regex::Regex::new(r"(?i)^.*\.([a-z]{1,5})$").unwrap();
         let file_ext = file_ext_regex.captures(filename).unwrap().get(1).unwrap().as_str();
-        log::debug(&filename);
         let content_type = &field.content_type().to_string();
 
         let mut vec: Vec<i64> = Vec::with_capacity(32);
@@ -117,7 +116,6 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 
         let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth, &hash, ".hgo")).unwrap(); //create the file
 
-        log::debug(bytes.len().to_string().as_str());
         let ciphertext = cipher.encrypt(&nonce, bytes.as_ref()).unwrap(); // encrypt the bytes
 
         web::block(move || file.write_all(&ciphertext).map(|_| file)).await??; // write the bytes
@@ -150,7 +148,6 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         }
     }
 
-    println!("{:?}", &res);
     if res.size == "" {
         return Ok(HttpResponse::BadRequest().json(MessageResponse {
             message: "No file uploaded".to_string(),
@@ -196,9 +193,6 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 
     let file_key = base64::decode_config(file.get("deletion_key").unwrap().as_str().unwrap(), base64::URL_SAFE_NO_PAD).unwrap();
 
-    println!("{:?}", file.get("deletion_key").unwrap().as_str().unwrap());
-    println!("{:?}", &query.deletion_key);
-
     if deletion_key != file_key {
         return Ok(HttpResponse::Unauthorized().json(MessageResponse {
             message: "Invalid deletion key".to_string(),
@@ -207,7 +201,7 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 
     let user = user.unwrap();
 
-    println!("{}", format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
+    //println!("{}", format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
 
     let _hash = hash.clone();
 
@@ -247,9 +241,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
         nonce = super::utils::zws_to_base64(&nonce);
     }
 
-    log::debug(&key);
-
-    log::debug(&format!("GET: /api/v1/files/{}", path).to_string());
+    log::debug(&format!("GET: /api/v1/files/{}", hash).to_string());
     let key = base64::decode_config(key, base64::URL_SAFE_NO_PAD).unwrap();
     let nonce = base64::decode_config(nonce, base64::URL_SAFE_NO_PAD).unwrap();
 

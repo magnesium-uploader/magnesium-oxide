@@ -75,7 +75,7 @@ async fn main() -> std::io::Result<()> {
             o.run().await
         }
         Err(_) => {
-            log::critical("Could not start server");
+            log::critical("Could not bind to address");
             std::process::exit(1);
         }
     }

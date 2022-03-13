@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::error::Error;
 
 use bson::Document;
@@ -7,7 +6,6 @@ use mongodb::bson::doc;
 
 use crate::AppState;
 use crate::routes::v1::types::Privileges;
-use super::super::super::log;
 
 /// Check the users quota
 /// # Returns:
@@ -98,7 +96,7 @@ pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<b
     Ok(true)
 }
 
-const zws: [char; 16] = [
+const ZWS: [char; 16] = [
   '\u{e006c}', // 0
   '\u{e006d}', // 1
   '\u{e006e}', // 2
@@ -117,7 +115,7 @@ const zws: [char; 16] = [
   '\u{e007f}', // F
 ];
 
-const chars: [char; 16] = [
+const CHARS: [char; 16] = [
   '0',
   '1',
   '2',
@@ -147,8 +145,8 @@ pub fn base64_to_zws(input: &str) -> String {
     let hex = hex.to_lowercase();
     let mut zws_string = String::new();
     for (_, c) in hex.chars().enumerate() {
-        let index = chars.iter().position(|&x| x == c).unwrap();
-        zws_string.push_str(&zws[index].to_string());
+        let index = CHARS.iter().position(|&x| x == c).unwrap();
+        zws_string.push_str(&ZWS[index].to_string());
     }
 
     zws_string
@@ -157,8 +155,8 @@ pub fn base64_to_zws(input: &str) -> String {
 pub fn zws_to_base64(input: &str) -> String {
     let mut hex = String::new();
     for i in input.chars() {
-        let index = zws.iter().position(|&x| x == i).unwrap();
-        hex.push_str(&chars[index].to_string());
+        let index = ZWS.iter().position(|&x| x == i).unwrap();
+        hex.push_str(&CHARS[index].to_string());
     }
 
     let mut string = String::new();

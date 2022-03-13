@@ -5,7 +5,6 @@ use aes_gcm_siv::{
     aead::{Aead, NewAead},
     Aes256GcmSiv, Key, Nonce,
 };
-use super::log;
 
 pub fn get_key() -> Result<Vec<Vec<u8>>, Box<dyn Error>> {
     // look for a file called "oxide.key" containing bytes
@@ -71,9 +70,6 @@ pub async fn encrypt(content: String) -> Result<Vec<u8>, Box<dyn Error>> {
         nonce[i] = _nonce[i];
     };
 
-    log::debug(format!("{:?}", key).as_str());
-    log::debug(format!("{:?}", nonce).as_str());
-
     let nonce = Nonce::from_slice(&nonce);
     let cipher = Aes256GcmSiv::new(Key::from_slice(&key));
     
@@ -106,9 +102,6 @@ pub async fn decrypt(ciphertext: String) -> Result<Vec<u8>, Box<dyn Error>>  {
     for i in 0.._nonce.len() {
         nonce[i] = _nonce[i];
     };
-
-    log::debug(format!("{:?}", key).as_str());
-    log::debug(format!("{:?}", nonce).as_str());
 
     let nonce = Nonce::from_slice(&nonce);
     let cipher = Aes256GcmSiv::new(Key::from_slice(&key));
