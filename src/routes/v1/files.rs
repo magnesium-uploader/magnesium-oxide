@@ -114,7 +114,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             "uploader": user.get("_id").unwrap().as_object_id(),
         };
 
-        let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth, &hash, ".hgo")).unwrap(); //create the file
+        let mut file = std::fs::File::create(format!("{}/{}/{}{}", data.config.files.storage_path, &auth, &hash, ".mgo")).unwrap(); //create the file
 
         let ciphertext = cipher.encrypt(&nonce, bytes.as_ref()).unwrap(); // encrypt the bytes
 
@@ -139,7 +139,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
             nonce,
         };
 
-        if let Some(zws) = content.headers().get("zws") { // check discord owo
+        if let Some(zws) = content.headers().get("zws") {
             if zws.to_str().unwrap() == "true" {
                 res.name = format!("\u{200d}{}.{}", super::utils::base64_to_zws(&hash), file_ext);
                 res.key = super::utils::base64_to_zws(&res.key);
@@ -201,11 +201,11 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
 
     let user = user.unwrap();
 
-    //println!("{}", format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
+    //println!("{}", format!("{}/{}/{}.mgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
 
     let _hash = hash.clone();
 
-    web::block(move || std::fs::remove_file(format!("{}/{}/{}.hgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash))).await??;
+    web::block(move || std::fs::remove_file(format!("{}/{}/{}.mgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash))).await??;
 
     files_collection.delete_one(doc! {"hash": &_hash.to_string()}, None).await.unwrap();
 
@@ -259,7 +259,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
     let user = user.unwrap();
     let api_key = user.get("api_key").unwrap().as_str().unwrap();
 
-    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &hash, ".hgo")).unwrap();
+    let mut file = std::fs::File::open(format!("./storage/{}/{}{}", api_key, &hash, ".mgo")).unwrap();
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).unwrap();
 
