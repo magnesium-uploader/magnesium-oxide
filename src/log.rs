@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 fn get_time() -> String {
-    return chrono::offset::Utc::now().to_rfc2822();
+    chrono::offset::Utc::now().to_rfc2822()
 }
 
 #[allow(dead_code)]

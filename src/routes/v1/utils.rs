@@ -1,10 +1,11 @@
 use std::error::Error;
 
 use bson::Document;
-use futures_util::TryStreamExt;
+
 use mongodb::bson::doc;
 
 use crate::AppState;
+use crate::crypto::{c_find};
 use crate::routes::v1::types::Privileges;
 
 /// Check the users quota
@@ -22,13 +23,18 @@ pub async fn check_quota(data: &AppState, user: &Document, upload_size: usize) -
     let files_collection = data.database.collection::<Document>("files");
     // Count the sizes of all the files owned by the user
 
-    let mut _result = files_collection
-        .find(doc! {"uploader": user.get_object_id("_id").unwrap()}, None)
-        .await
-        .unwrap();
+    let _result = match c_find(
+            &files_collection,
+            &doc! {"uploader": user.get_object_id("_id").unwrap()},
+            &data.config,
+        ).await?{
+        Some(o) => o,
+        None => vec![]
+    };
 
+    let mut _result = _result.iter();
     let mut total_size = 0;
-    while let Some(file) = _result.try_next().await? {
+    for file in _result.by_ref() {
         total_size += file.get_i32("size").unwrap() as usize;
     }
 
@@ -170,8 +176,7 @@ pub fn zws_to_base64(input: &str) -> String {
         bytes.push(i as u8);
     }
 
-    let base64 = base64::encode_config(&bytes, base64::URL_SAFE_NO_PAD);
-    base64
+    base64::encode_config(&bytes, base64::URL_SAFE_NO_PAD)
 }
 
 /// Typecast a string to a Privilege

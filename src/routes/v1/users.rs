@@ -6,6 +6,8 @@ use mongodb::{
 use regex::Regex;
 use sha3::{Digest, Sha3_512};
 
+use crate::crypto::{c_insert_one, c_find_one, c_delete_one, c_delete_many};
+
 use crate::AppState;
 use crate::log;
 use crate::routes::v1::types::{DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse};
@@ -34,12 +36,7 @@ pub async fn create(
     let database: Database = data.database.clone();
     let userscollection = database.collection::<Document>("users");
 
-    if userscollection
-        .find_one(doc! {"username": &request.username}, None)
-        .await
-        .unwrap()
-        != None
-    {
+    if c_find_one(&userscollection, &doc! {"username": &request.username}, &data.config).await? != None {
         return Ok(HttpResponse::Conflict().json(MessageResponse {
             message: "User already exists".to_string(),
         }));
@@ -60,20 +57,19 @@ pub async fn create(
     };
 
     let current = chrono::Utc::now();
-    let _result = userscollection
-        .insert_one(
-            doc! {
-                "username": sanatize(&request.username),
-                "password": &hashed_password,
-                "quota": data.config.users.default_user_quota as i32,
-                "privileges": vec![Privileges::CreateFile, Privileges::DeleteFile, Privileges::DeleteUser],
-                "api_key": &api_key,
-                "created_at": current,
-            },
-            None,
-        )
-        .await
-        .unwrap();
+
+    c_insert_one(
+        &userscollection,
+        &doc! {
+            "username": sanatize(&request.username),
+            "password": &hashed_password,
+            "quota": data.config.users.default_user_quota as i32,
+            "privileges": vec![Privileges::CreateFile, Privileges::DeleteFile, Privileges::DeleteUser],
+            "api_key": &api_key,
+            "created_at": current,
+        },
+        &data.config,
+    ).await?;
 
     let _api_key = api_key.clone();
 
@@ -108,11 +104,9 @@ pub async fn delete(
 ) -> Result<impl Responder> {
     log::debug("DELETE: /api/v1/users");
     let userscollection = data.database.collection::<Document>("users");
+    let filescollection = data.database.collection::<Document>("files");
 
-    let user = userscollection
-        .find_one(doc! {"username": &request.username}, None)
-        .await
-        .unwrap();
+    let user = c_find_one(&userscollection, &doc! {"username": &request.username}, &data.config).await?;
 
     if user == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
@@ -121,12 +115,12 @@ pub async fn delete(
     }
     let user = user.unwrap();
 
+    let user_id = user.get_object_id("_id").unwrap();
+
     //? check if the api key has the privilage Privlages::GlobalDeleteUser
     if check_privilege(&user.clone(), Privileges::GlobalDeleteUser).await? {
-        let _result = userscollection
-            .delete_one(doc! {"username": &request.username}, None)
-            .await
-            .unwrap();
+        c_delete_one(&userscollection, &doc! {"_id": &user_id}, &data.config).await?;
+        c_delete_many(&filescollection, &doc! {"uploader": &user_id}, &data.config).await?;
 
         let _result = web::block(move || {
             std::fs::remove_dir_all(format!("storage/{}", request.api_key)).unwrap()
@@ -139,10 +133,8 @@ pub async fn delete(
 
     //? check if the username has the privilage Privlages::DeleteUser
     if check_privilege(&user, Privileges::DeleteUser).await? {
-        let _result = userscollection
-            .delete_one(doc! {"username": &request.username}, None)
-            .await
-            .unwrap();
+        c_delete_one(&userscollection, &doc! {"_id": &user_id}, &data.config).await?;
+        c_delete_many(&filescollection, &doc! {"uploader": &user_id}, &data.config).await?;
 
         let _result = web::block(move || {
             std::fs::remove_dir_all(format!("storage/{}", request.api_key)).unwrap()

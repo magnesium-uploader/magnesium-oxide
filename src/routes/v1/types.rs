@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 /// # Implementations:
 /// * `From<Privileges> -> bson::Bson` - Convert a Privlage to bson::Bson
 /// * `PartialEq -> bool` - Check if two Privlages are equal
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub enum Privileges {
     CreateFile,
     DeleteFile,
@@ -41,15 +41,15 @@ impl From<Privileges> for bson::Bson {
 
 impl PartialEq for Privileges {
     fn eq(&self, other: &Privileges) -> bool {
-        match (self, other) {
-            (Privileges::CreateFile, Privileges::CreateFile) => true,
-            (Privileges::DeleteFile, Privileges::DeleteFile) => true,
-            (Privileges::DeleteUser, Privileges::DeleteUser) => true,
-            (Privileges::GlobalDeleteFile, Privileges::GlobalDeleteFile) => true,
-            (Privileges::GlobalDeleteUser, Privileges::GlobalDeleteUser) => true,
-            (Privileges::UnlimitedQuota, Privileges::UnlimitedQuota) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Privileges::CreateFile, Privileges::CreateFile)
+                | (Privileges::DeleteFile, Privileges::DeleteFile)
+                | (Privileges::DeleteUser, Privileges::DeleteUser)
+                | (Privileges::GlobalDeleteFile, Privileges::GlobalDeleteFile)
+                | (Privileges::GlobalDeleteUser, Privileges::GlobalDeleteUser)
+                | (Privileges::UnlimitedQuota, Privileges::UnlimitedQuota)
+        )
     }
 }
 

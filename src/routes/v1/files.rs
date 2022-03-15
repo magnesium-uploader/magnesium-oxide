@@ -11,7 +11,7 @@ use mongodb::bson::{doc, Document};
 use rand::Rng;
 use sha3::{Digest, Sha3_512};
 
-use crate::AppState;
+use crate::{AppState, crypto::{c_replace_one, c_delete_one, c_find_one}};
 use crate::log;
 use crate::routes::v1::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};
 use crate::routes::v1::utils::check_quota;
@@ -46,7 +46,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 
     while let Some(mut field) = payload.try_next().await.unwrap() {
         let auth = content.headers().get("authorization").unwrap().to_str().unwrap();
-        let user = users_collection.find_one(doc! {"api_key": auth.to_string()}, None).await.unwrap();
+        let user = c_find_one(&users_collection, &doc! {"api_key": auth.to_string()}, &data.config).await?;
         if user == None {
             return Ok(HttpResponse::Unauthorized().json(MessageResponse {
                 message: "Invalid credentials".to_string(),
@@ -120,11 +120,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 
         web::block(move || file.write_all(&ciphertext).map(|_| file)).await??; // write the bytes
 
-        let options = mongodb::options::ReplaceOptions::builder()
-            .upsert(true)
-            .build();
-
-        files_collection.replace_one(doc! {"hash": &hash}, doc, options).await.unwrap();
+        c_replace_one(&files_collection, &doc! {"hash": &hash}, &doc, &data.config).await?;
 
         log::info(format!("{} uploaded {} ({} bytes) [{}]", auth, &filename, &size, &content_type).as_str());
         let nonce = base64::encode_config(&nonce, base64::URL_SAFE_NO_PAD);
@@ -148,7 +144,7 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
         }
     }
 
-    if res.size == "" {
+    if res.size.is_empty() {
         return Ok(HttpResponse::BadRequest().json(MessageResponse {
             message: "No file uploaded".to_string(),
         }));
@@ -167,30 +163,29 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
 /// * `deletion_key` - Deletion key
 #[get("/{name}/delete")]
 pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>, query: web::Query<FileDeleteQuery>) -> Result<HttpResponse, Error> {
-    log::debug(&format!("GET: /api/v1/files/{}/delete", &path.0).to_string());
+    log::debug(&format!("GET: /api/v1/files/{}/delete", &path.0));
     let files_collection = data.database.collection::<Document>("files");
     let users_collection = data.database.collection::<Document>("users");
 
     let path = path.0.clone();
 
-    let mut hash = path.split(".").next().unwrap().to_string();
+    let mut hash = path.split('.').next().unwrap().to_string();
 
-    if hash.chars().nth(0).unwrap() == '\u{200d}' {
-        hash.remove(0);
+    if hash.starts_with('\u{200d}') {
         hash = super::utils::zws_to_base64(&hash);
     }
 
-    let file = files_collection.find_one(doc! {"hash": &hash}, None).await.unwrap();
+    let file = c_find_one(&files_collection, &doc! {"hash": &hash}, &data.config).await?;
     if file == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
         }));
     }
     let file = file.unwrap();
+    println!("{:?}", file);
 
-    let user = users_collection.find_one(doc! {"_id": &file.get("uploader").unwrap().as_object_id().unwrap()}, None).await.unwrap();
+    let user = c_find_one(&users_collection, &doc! {"_id": &file.get("uploader").unwrap().as_object_id().unwrap()}, &data.config).await?;
     let deletion_key = base64::decode_config(&query.deletion_key, base64::URL_SAFE_NO_PAD).unwrap();
-
     let file_key = base64::decode_config(file.get("deletion_key").unwrap().as_str().unwrap(), base64::URL_SAFE_NO_PAD).unwrap();
 
     if deletion_key != file_key {
@@ -204,10 +199,11 @@ pub async fn delete_file(data: web::Data<AppState>, path: web::Path<(String, )>,
     //println!("{}", format!("{}/{}/{}.mgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash));
 
     let _hash = hash.clone();
+    let _conf = data.config.clone();
 
-    web::block(move || std::fs::remove_file(format!("{}/{}/{}.mgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace("\"", ""), &hash))).await??;
+    web::block(move || std::fs::remove_file(format!("{}/{}/{}.mgo", data.config.files.storage_path, user.get("api_key").unwrap().to_string().replace('\"', ""), &hash))).await??;
 
-    files_collection.delete_one(doc! {"hash": &_hash.to_string()}, None).await.unwrap();
+    c_delete_one(&files_collection, &doc! {"hash": &_hash.to_string()}, &_conf).await?;
 
     Ok(HttpResponse::Ok().body("Successfully deleted"))
 }
@@ -228,24 +224,24 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
 
     let path = path.0.clone();
 
-    let mut hash = path.split(".").next().unwrap().to_string();
+    let mut hash = path.split('.').next().unwrap().to_string();
     let mut key = query.key.clone();
     let mut nonce = query.nonce.clone();
 
     drop(query);
 
-    if hash.chars().nth(0).unwrap() == '\u{200d}' {
+    if hash.starts_with('\u{200d}') {
         hash.remove(0);
         hash = super::utils::zws_to_base64(&hash);
         key = super::utils::zws_to_base64(&key);
         nonce = super::utils::zws_to_base64(&nonce);
     }
 
-    log::debug(&format!("GET: /api/v1/files/{}", hash).to_string());
+    log::debug(&format!("GET: /api/v1/files/{}", hash));
     let key = base64::decode_config(key, base64::URL_SAFE_NO_PAD).unwrap();
     let nonce = base64::decode_config(nonce, base64::URL_SAFE_NO_PAD).unwrap();
 
-    let doc = files_collection.find_one(doc! {"hash": &hash}, None).await.unwrap();
+    let doc = c_find_one(&files_collection, &doc! {"hash": &hash}, &data.config).await?;
     if doc == None {
         return Ok(HttpResponse::NotFound().json(MessageResponse {
             message: "File not found".to_string(),
@@ -254,7 +250,7 @@ pub async fn get_file(data: web::Data<AppState>, path: web::Path<(String, )>, qu
 
     let doc = doc.unwrap();
     let uploader = doc.get("uploader").unwrap();
-    let user = users_collection.find_one(doc! {"_id": uploader}, None).await.unwrap();
+    let user = c_find_one(&users_collection, &doc! {"_id": uploader}, &data.config).await?;
 
     let user = user.unwrap();
     let api_key = user.get("api_key").unwrap().as_str().unwrap();
