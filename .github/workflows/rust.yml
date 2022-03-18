@@ -18,7 +18,6 @@ jobs:
           git-message: "chore(release): {version}"
           git-pull-method: "--ff-only"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          output-file: "true"
           preset: angular
           release-count: "10"
           skip-commit: "false"
