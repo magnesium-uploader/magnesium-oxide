@@ -21,12 +21,16 @@ Magnesium-Oxide (MGO) is a secure file uploader with support for ShareX.
 - [ ] Support for other databases
 - [ ] Support for linux alternatives to ShareX (make an issue to request)
 
-## 🤝 Support
-
-Don't hesitate to give us a ⭐️ if you like what you see!
-
 ## ➕ Contributing
 
 Contributions, issues, and feature requests are welcome,
 
 Ensure you read [CONTRIBUTING](CONTRIBUTING.md) before submitting a pull request.
+
+## 🤝 Support
+
+Don't hesitate to give us a ⭐️ if you like what you see!
+
+## 📊 Benchmarks
+
+![fast](https://mgo.li/4c646c67b7ed79c2885bd7868890c0960c2b578d3f496e3201bcdd5b740c7fbfccc9a112ee591dda4f764d29f205917ec2bf4b6cd93ff408efe66c45856bf587.jpg?key=hnVvNAUQHiFoQujK-2lCeZbDaBdE8oefSgymzaFvaw4&nonce=CIFsraKyqoPWwhUd)
