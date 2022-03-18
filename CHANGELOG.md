@@ -1,3 +1,12 @@
+## [0.1.4](https://github.com/ChecksumDev/magnesium-oxide/compare/v0.1.3...v0.1.4) (2022-03-18)
+
+
+### Bug Fixes
+
+* **/api/v1/files:** :bug: return unauthorized on no auth header ([fd1b2ad](https://github.com/ChecksumDev/magnesium-oxide/commit/fd1b2ad21c29a8798dc40fcbe8457269b621e581))
+
+
+
 ## [0.1.3](https://github.com/ChecksumDev/magnesium-oxide/compare/v0.1.2...v0.1.3) (2022-03-18)
 
 
