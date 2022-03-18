@@ -45,7 +45,15 @@ pub async fn upload(data: web::Data<AppState>, mut payload: Multipart, content: 
     let users_collection = data.database.collection::<Document>("users");
 
     while let Some(mut field) = payload.try_next().await.unwrap() {
-        let auth = content.headers().get("authorization").unwrap().to_str().unwrap();
+        let auth = match content.headers().get("authorization") {
+            Some(o) => {o.to_str().unwrap()},
+            None => {
+                return Ok(HttpResponse::Unauthorized().json(MessageResponse {
+                    message: "No Authorization Header".to_string(),
+                }));
+            },
+        };
+        
         let user = c_find_one(&users_collection, &doc! {"api_key": auth.to_string()}, &data.config).await?;
         if user == None {
             return Ok(HttpResponse::Unauthorized().json(MessageResponse {
