@@ -1,4 +1,13 @@
-# 0.1.0 (2022-03-18)
+## [0.1.1](https://github.com/ChecksumDev/magnesium-oxide/compare/v0.1.0...v0.1.1) (2022-03-18)
+
+
+### Bug Fixes
+
+* :green_heart: Use actions-rs instead of running commands raw ([fcc6fc1](https://github.com/ChecksumDev/magnesium-oxide/commit/fcc6fc1069c9e63cc0b374e1efeba36c86de27e7))
+
+
+
+# [0.1.0](https://github.com/ChecksumDev/magnesium-oxide/compare/43ef4e1c63df6fa0f4e9b76df07eabb295d22697...v0.1.0) (2022-03-18)
 
 
 ### Bug Fixes
