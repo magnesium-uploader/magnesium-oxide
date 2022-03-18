@@ -1,55 +1,85 @@
-name: Build Prod
-
-on:
-  push:
-    branches: [ stable ]
-
+---
 jobs:
   release:
-    strategy:
-      matrix:
-        include:
-          - target: ubuntu-latest
-
     runs-on: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
-
       - uses: Swatinem/rust-cache@v1
+
+      - id: changelog
+        name: Conventional Changelog Action
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          git-message: "chore(release): {version}"
+          git-pull-method: "--ff-only"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-file: "true"
+          preset: angular
+          release-count: "10"
+          skip-commit: "false"
+          skip-on-empty: "false"
+          skip-version-file: "false"
+          tag-prefix: v
+          version-file: Cargo.toml
+          version-path: package.version
 
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
           command: check
 
-      - name: "Build Magnesium"
+      - name: Build Magnesium
         run: |
           cargo build --release
 
-      - name: "Install SSH Key"
+      - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: "space"
+          known_hosts: space
 
-      - name: "Set known_hosts"
+      - name: Set known_hosts
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: "Stop Magnesium"
+      - name: Stop Magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ${{ secrets.SSH_PASSWORD }} | sudo --stdin -- bash -c 'systemctl stop magnesium'"
 
-      - name: "Deploy Magnesium"
+      - name: Deploy Magnesium
         run: rsync -avz target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/
 
-      - name: "Start Magnesium"
+      - name: Start Magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ${{ secrets.SSH_PASSWORD }} | sudo --stdin -- bash -c 'systemctl start magnesium'"
 
-      - name: "Upload artifacts"
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: magnesium-oxide (${{ matrix.target }})
           path: target/release/magnesium-oxide
+
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: target/release/magnesium-oxide
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.changelog.outputs.tag }}
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+    strategy:
+      matrix:
+        include:
+          - target: ubuntu-latest
+
+name: Build and Deploy
+"on":
+  push:
+    branches:
+      - main
