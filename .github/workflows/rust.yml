@@ -71,8 +71,8 @@ jobs:
           body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
           prerelease: false
-          release_name: ${{ steps.changelog.outputs.tag }}
-          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
+          tag: ${{ steps.changelog.outputs.tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
     strategy:
