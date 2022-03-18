@@ -32,10 +32,12 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --release
 
-      - name: Build Magnesium
-        run: |
-          cargo build --release
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
 
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
