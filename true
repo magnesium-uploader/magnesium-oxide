@@ -1,3 +1,12 @@
+## [0.1.2](https://github.com/ChecksumDev/magnesium-oxide/compare/v0.1.1...v0.1.2) (2022-03-18)
+
+
+### Bug Fixes
+
+* :bug: release_tag and tag_name are invalid, fixed ([8d7e060](https://github.com/ChecksumDev/magnesium-oxide/commit/8d7e060cf47b50642f4e807604b1f248ed69573f))
+
+
+
 ## [0.1.1](https://github.com/ChecksumDev/magnesium-oxide/compare/v0.1.0...v0.1.1) (2022-03-18)
 
 
