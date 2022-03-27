@@ -1,16 +1,12 @@
 ---
 jobs:
   release:
-    runs-on: ${{ matrix.target }}
+    runs-on: ubuntu-20.04
     steps:
+      # Checkout the repository
       - uses: actions/checkout@v2
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v1
-
+      # Run conventional commits and determine if the release requires building
       - id: changelog
         name: Conventional Changelog Action
         uses: TriPSs/conventional-changelog-action@v3
@@ -27,41 +23,77 @@ jobs:
           version-file: Cargo.toml
           version-path: package.version
 
-      - name: Run cargo check
+      # Load the rust toolchain
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      # Load any cache stored by rust-cache
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: Swatinem/rust-cache@v1
+
+      # Run cargo check (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
+          args: "--release"
           command: check
-          args: --release
 
-      - uses: actions-rs/cargo@v1
+      # Run cargo build (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/cargo@v1
         with:
+          args: "--release"
           command: build
-          args: --release
 
-      - name: Install SSH Key
+      # Run cargo test (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/cargo@v1
+        with:
+          args: "--release"
+          command: test
+
+      # Install the SSH key for our server
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: space
 
-      - name: Set known_hosts
+      # Load the known hosts from the server
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Set known_hosts
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Stop Magnesium
+      # TODO: Make this entire deployment a script instead of multiple ssh commands
+      # SSH into the server and stop magnesium
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Stop Magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ${{ secrets.SSH_PASSWORD }} | sudo --stdin -- bash -c 'systemctl stop magnesium'"
 
-      - name: Deploy Magnesium
+      # SSH into the server and deploy the release using rsync
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Deploy Magnesium
         run: rsync -avz target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/
 
-      - name: Start Magnesium
+      # SSH into the server and start magnesium
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Start Magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo ${{ secrets.SSH_PASSWORD }} | sudo --stdin -- bash -c 'systemctl start magnesium'"
 
-      - name: Upload artifacts
+      # Deploy the release artifacts to GitHub
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: magnesium-oxide (${{ matrix.target }})
+          name: magnesium-oxide (release)
           path: target/release/magnesium-oxide
 
+      # Create a release on GitHub with the release notes
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Create Release
         uses: ncipollo/release-action@v1
@@ -69,15 +101,10 @@ jobs:
           artifacts: target/release/magnesium-oxide
           body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
-          prerelease: false
           name: ${{ steps.changelog.outputs.tag }}
+          prerelease: false
           tag: ${{ steps.changelog.outputs.tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-    strategy:
-      matrix:
-        include:
-          - target: ubuntu-latest
 
 name: Build and Deploy
 "on":
