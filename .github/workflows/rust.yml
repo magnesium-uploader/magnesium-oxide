@@ -17,7 +17,6 @@ jobs:
           preset: angular
           release-count: "10"
           skip-commit: "false"
-          skip-on-empty: "false"
           skip-version-file: "false"
           tag-prefix: v
           version-file: Cargo.toml
