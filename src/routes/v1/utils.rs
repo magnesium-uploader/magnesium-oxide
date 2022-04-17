@@ -2,10 +2,10 @@ use std::error::Error;
 
 use bson::Document;
 
-use mongodb::bson::doc;
+
 use sha3::{Digest, Sha3_512};
 
-use crate::crypto::c_find;
+
 use crate::routes::v1::types::Privileges;
 use crate::AppState;
 

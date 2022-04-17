@@ -9,7 +9,7 @@ use aes_gcm_siv::{
 use futures_util::TryStreamExt as _;
 use mongodb::bson::{doc, Document};
 use rand::Rng;
-use sha3::{Digest, Sha3_512};
+use sha3::{Digest};
 
 use crate::log;
 use crate::routes::v1::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};

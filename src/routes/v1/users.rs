@@ -6,11 +6,11 @@ use mongodb::{
 use regex::Regex;
 use sha3::{Digest, Sha3_512};
 
-use crate::crypto::{c_delete_many, c_delete_one, c_find_one, c_insert_one};
+use crate::crypto::{c_find_one, c_insert_one};
 
 use crate::log;
 use crate::routes::v1::types::{
-    DeleteRequest, MessageResponse, Privileges, UserRequest, UserResponse,
+    MessageResponse, Privileges, UserRequest, UserResponse,
 };
 use crate::AppState;
 
