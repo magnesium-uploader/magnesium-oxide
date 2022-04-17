@@ -14,20 +14,20 @@ pub struct ConfigNetwork {
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ConfigUsers {
-    pub default_user_quota: usize,
+    pub default_user_quota: i64,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ConfigFiles {
     pub storage_path: String,
-    pub max_upload_size: usize,
+    pub max_upload_size: i64,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ConfigMongo {
     pub uri: String,
     pub database: String,
-    pub encryption: bool
+    pub encryption: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -52,7 +52,7 @@ impl Config {
             network: ConfigNetwork {
                 bind_address: "127.0.0.1".to_string(),
                 bind_port: 8080,
-                return_address: "http://localhost:8080".to_string()
+                return_address: "http://localhost:8080".to_string(),
             },
             users: ConfigUsers {
                 default_user_quota: 1024 * 1024 * 1024,
@@ -64,7 +64,7 @@ impl Config {
             mongo: ConfigMongo {
                 uri: "".to_string(),
                 database: "".to_string(),
-                encryption: false
+                encryption: false,
             },
         };
         let toml = toml::to_string(&default).unwrap();
