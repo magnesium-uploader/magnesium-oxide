@@ -15,7 +15,7 @@ jobs:
           git-pull-method: "--ff-only"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           preset: angular
-          release-count: "10"
+          release-count: "0"
           skip-commit: "false"
           skip-version-file: "false"
           tag-prefix: v
