@@ -1,3 +1,18 @@
+# [0.2.0](https://github.com/magnesium-uploader/oxide/compare/v0.1.6...v0.2.0) (2022-04-17)
+
+
+### Bug Fixes
+
+* :bug: Use i64 to support bigger byte sizes ([2f3e5ee](https://github.com/magnesium-uploader/oxide/commit/2f3e5ee8a68cf2599011cf5615ef837104858063))
+* :technologist: Use GENERICS for logging! ([de86457](https://github.com/magnesium-uploader/oxide/commit/de86457a3aa538d30a14ce95155502f792a53912))
+
+
+### Features
+
+* :boom: Completely overhaul the privileges system to use Bitwise enums instead of string arrays! ([5fa6897](https://github.com/magnesium-uploader/oxide/commit/5fa6897e57f263398444903e663e791baa0152a1))
+
+
+
 ## [0.1.6](https://github.com/magnesium-uploader/oxide/compare/v0.1.5...v0.1.6) (2022-03-27)
 
 
