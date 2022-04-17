@@ -9,7 +9,7 @@ use aes_gcm_siv::{
 use futures_util::TryStreamExt as _;
 use mongodb::bson::{doc, Document};
 use rand::Rng;
-use sha3::{Digest};
+use sha3::Digest;
 
 use crate::log;
 use crate::routes::v1::types::{FileDeleteQuery, FileGetQuery, FileResponse, MessageResponse};
@@ -126,7 +126,7 @@ pub async fn upload(
 
         let hash = hash_to_string(&bytes);
 
-        user.insert("used", doc! {"used": size + user.get_i64("used").unwrap()});
+        user.insert("used", size + user.get_i64("used").unwrap());
 
         let file_doc = doc! {
             "hash": &hash,

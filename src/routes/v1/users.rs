@@ -78,7 +78,7 @@ pub async fn create(
         &doc! {
             "username": sanatize(&request.username),
             "password": &hashed_password,
-            "quota": data.config.users.default_user_quota as i64,
+            "quota": data.config.users.default_user_quota,
             "used": 0_i64,
             "privileges": user_privileges,
             "api_key": &api_key,
