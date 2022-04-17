@@ -1,15 +1,16 @@
 use mongodb::{options::ClientOptions, Client};
 
-use crate::{AppState, config::Config, crypto};
+use crate::{config::Config, crypto, AppState};
 
 pub async fn startup() -> AppState {
     println!(
-"\x1b[0;31m███╗   ███╗ █████╗  ██████╗ ███╗   ██╗███████╗███████╗██╗██╗   ██╗███╗   ███╗
+        "\x1b[0;31m███╗   ███╗ █████╗  ██████╗ ███╗   ██╗███████╗███████╗██╗██╗   ██╗███╗   ███╗
 ████╗ ████║██╔══██╗██╔════╝ ████╗  ██║██╔════╝██╔════╝██║██║   ██║████╗ ████║
 ██╔████╔██║███████║██║  ███╗██╔██╗ ██║█████╗  ███████╗██║██║   ██║██╔████╔██║
 ██║╚██╔╝██║██╔══██║██║   ██║██║╚██╗██║██╔══╝  ╚════██║██║██║   ██║██║╚██╔╝██║
 ██║ ╚═╝ ██║██║  ██║╚██████╔╝██║ ╚████║███████╗███████║██║╚██████╔╝██║ ╚═╝ ██║
-╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝     ╚═╝\x1b[0m");
+╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚══════╝╚═╝ ╚═════╝ ╚═╝     ╚═╝\x1b[0m"
+    );
 
     println!("\x1b[0;32m[+]\x1b[0m Starting up...");
 
@@ -46,7 +47,7 @@ pub async fn startup() -> AppState {
         println!("\x1b[0;32m[+]\x1b[0m MongoDB encryption is enabled");
         crypto::get_key().unwrap();
     }
-    
+
     println!("\x1b[0;32m[+]\x1b[0m Starting server...");
     let appstate = AppState {
         database: _database,
