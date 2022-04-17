@@ -1,3 +1,12 @@
+## [0.2.1](https://github.com/magnesium-uploader/oxide/compare/v0.2.0...v0.2.1) (2022-04-17)
+
+
+### Bug Fixes
+
+* :ambulance: Fix uploads after uploading twice. ([8ea526d](https://github.com/magnesium-uploader/oxide/commit/8ea526d08743a96ff0021d75cd5c83e332b699a2))
+
+
+
 # [0.2.0](https://github.com/magnesium-uploader/oxide/compare/v0.1.6...v0.2.0) (2022-04-17)
 
 
