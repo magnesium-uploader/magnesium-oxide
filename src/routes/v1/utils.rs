@@ -3,10 +3,11 @@ use std::error::Error;
 use bson::Document;
 
 use mongodb::bson::doc;
+use sha3::{Digest, Sha3_512};
 
-use crate::AppState;
-use crate::crypto::{c_find};
+use crate::crypto::c_find;
 use crate::routes::v1::types::Privileges;
+use crate::AppState;
 
 /// Check the users quota
 /// # Returns:
@@ -15,31 +16,20 @@ use crate::routes::v1::types::Privileges;
 /// * `data` - A reference to the application state
 /// * `user` - A bson document containing the user's information
 /// * `upload_size` - The size of the file to be uploaded
-pub async fn check_quota(data: &AppState, user: &Document, upload_size: usize) -> Result<bool, Box<dyn Error>> {
-    if check_privilege(user, Privileges::UnlimitedQuota).await? {
+pub async fn check_quota(
+    _data: &AppState,
+    user: &Document,
+    upload_size: i64,
+) -> Result<bool, Box<dyn Error>> {
+    let privs = Privileges::from_bits_truncate(user.get_i32("privileges").unwrap() as u32);
+    if privs.contains(Privileges::UNLIMITED_QUOTA) {
         return Ok(true);
     }
 
-    let files_collection = data.database.collection::<Document>("files");
-    // Count the sizes of all the files owned by the user
-
-    let _result = match c_find(
-            &files_collection,
-            &doc! {"uploader": user.get_object_id("_id").unwrap()},
-            &data.config,
-        ).await?{
-        Some(o) => o,
-        None => vec![]
-    };
-
-    let mut _result = _result.iter();
-    let mut total_size = 0;
-    for file in _result.by_ref() {
-        total_size += file.get_i32("size").unwrap() as usize;
-    }
-
-    // Check if the user has enough space to upload the file
-    if total_size + upload_size > user.get_i32("quota").unwrap() as usize {
+    let quota = user.get_i64("quota").unwrap();
+    let used = user.get_i64("used").unwrap();
+    let remaining = quota - used;
+    if remaining < upload_size {
         return Ok(false);
     }
 
@@ -55,8 +45,13 @@ pub async fn check_quota(data: &AppState, user: &Document, upload_size: usize) -
 /// * `user` - A bson document containing the user's information
 /// * `privilege` - An array of privileges to check against the user's privileges
 #[allow(dead_code)]
-pub async fn check_privileges(user: &Document, privileges: &[Privileges]) -> Result<bool, Box<dyn Error>> {
-    let user_privileges = user.get_array("privileges").unwrap()
+pub async fn check_privileges(
+    user: &Document,
+    privileges: &[Privileges],
+) -> Result<bool, Box<dyn Error>> {
+    let user_privileges = user
+        .get_array("privileges")
+        .unwrap()
         .iter()
         .map(|privilege| privilege.as_str().unwrap())
         .collect::<Vec<&str>>();
@@ -72,31 +67,6 @@ pub async fn check_privileges(user: &Document, privileges: &[Privileges]) -> Res
         if !_vec.contains(&i) {
             return Ok(false);
         }
-    }
-
-    Ok(true)
-}
-
-/// Check a single privilege (use check_privileges for multiple privileges)
-/// # Returns:
-/// * `Result<bool, Box<dyn Error>>` - A result containing the a boolean indicating if the user has the privilege
-/// # Parameters:
-/// * `user` - A bson document containing the user's information
-/// * `privilege` - A single privilege to check against the user's privileges
-pub async fn check_privilege(user: &Document, privilege: Privileges) -> Result<bool, Box<dyn Error>> {
-    let user_privileges = user.get_array("privileges").unwrap()
-        .iter()
-        .map(|privilege| privilege.as_str().unwrap())
-        .collect::<Vec<&str>>();
-
-    let mut _vec: Vec<Privileges> = Vec::new();
-
-    for i in user_privileges {
-        _vec.push(str_to_privilege(i));
-    }
-
-    if !_vec.contains(&privilege) {
-        return Ok(false);
     }
 
     Ok(true)
@@ -122,22 +92,7 @@ const ZWS: [char; 16] = [
 ];
 
 const CHARS: [char; 16] = [
-    '0',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
 ];
 
 pub fn base64_to_zws(input: &str) -> String {
@@ -187,12 +142,23 @@ pub fn zws_to_base64(input: &str) -> String {
 #[allow(dead_code)] // error: box too large
 pub fn str_to_privilege(privilege: &str) -> Privileges {
     match privilege {
-        "create_file" => Privileges::CreateFile,
-        "delete_file" => Privileges::DeleteFile,
-        "delete_user" => Privileges::DeleteUser,
-        "global_delete_file" => Privileges::GlobalDeleteFile,
-        "global_delete_user" => Privileges::GlobalDeleteUser,
-        "unlimited_quota" => Privileges::UnlimitedQuota,
+        "create_file" => Privileges::CREATE_FILE,
+        "delete_file" => Privileges::DELETE_FILE,
+        "delete_user" => Privileges::DELETE_USER,
+        "global_delete_file" => Privileges::GLOBAL_DELETE_FILE,
+        "global_delete_user" => Privileges::GLOBAL_DELETE_USER,
+        "unlimited_quota" => Privileges::UNLIMITED_QUOTA,
         _ => panic!("Invalid privilege"),
     }
+}
+
+pub fn hash_to_string(bytes: &Vec<u8>) -> String {
+    let mut hasher = Sha3_512::new();
+    hasher.update(bytes);
+    let hash = hasher.finalize();
+    let mut hash_string = String::with_capacity(64);
+    for byte in hash.as_slice() {
+        hash_string.push_str(&format!("{:02x}", byte));
+    }
+    hash_string
 }
