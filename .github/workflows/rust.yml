@@ -4,7 +4,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       # Checkout the repository
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Run conventional commits and determine if the release requires building
       - id: changelog
