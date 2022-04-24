@@ -15,7 +15,7 @@ updates:
     reviewers:
       - "sargon64"
     labels:
-      - "dependabot"
+      - "dependencies"
       - "cargo"
     versioning-strategy: "auto"
     target-branch: "main"
@@ -25,5 +25,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
     assignees:
       - "checksumdev"
