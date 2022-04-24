@@ -17,7 +17,7 @@ updates:
     labels:
       - "dependabot"
       - "cargo"
-    versioning-strategy: "increase-if-necessary"
+    versioning-strategy: "auto"
     target-branch: "main"
 
   # GitHub Actions dependencies
@@ -25,4 +25,5 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    versioning-strategy: "increase-if-necessary"
+    assignees:
+      - "checksumdev"
