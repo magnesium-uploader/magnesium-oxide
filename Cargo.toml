@@ -14,7 +14,7 @@ sha3 = "0.10.1"
 actix-multipart = "0.4"
 futures-util = { version = "0.3.7", default-features = false, features = ["std"] }
 hex-literal = "0.3.4"
-uuid = { version = "0.8.2", features = ["v4"] }
+uuid = { version = "1.0.0", features = ["v4"] }
 regex = "1.5.4"
 aes-gcm-siv = "0.10.3"
 rand = "0.8.5"
