@@ -10,6 +10,9 @@ RUN git clone https://github.com/magnesium-uploader/magnesium-oxide.git /magnesi
 # Build magnesium-oxide for release
 RUN cd /magnesium-oxide && cargo build --release
 
+# Create the directory for magnesium-oxide's data
+RUN mkdir -p /usr/local/share/magnesium
+
 # Copy the binary to the container
 RUN cp /magnesium-oxide/target/release/magnesium-oxide /usr/local/share/magnesium/magnesium-oxide
 
@@ -20,8 +23,6 @@ RUN chmod +x /usr/local/bin/magnesium-oxide
 RUN rm -rf /magnesium-oxide
 RUN rm -rf /var/cache/apk/*
 
-# Create the directory for magnesium-oxide's data
-RUN mkdir -p /usr/local/share/magnesium
 
 # Set the working directory the executable will run in
 WORKDIR "/usr/local/share/magnesium"
