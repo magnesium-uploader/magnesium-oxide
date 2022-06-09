@@ -1,0 +1,85 @@
+---
+jobs:
+  release:
+    runs-on: ubuntu-20.04
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v3
+
+      # Run conventional commits and determine if the release requires building
+      - id: changelog
+        name: Conventional Changelog Action
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          git-message: "chore(release): {version}"
+          git-pull-method: "--ff-only"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          preset: angular
+          release-count: "0"
+          skip-commit: "false"
+          skip-version-file: "false"
+          tag-prefix: v
+          version-file: Cargo.toml
+          version-path: package.version
+
+      # Load the rust toolchain
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      # Load any cache stored by rust-cache
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: Swatinem/rust-cache@v1
+
+      # Run cargo check (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          args: "--release"
+          command: check
+
+      # Run cargo build (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/cargo@v1
+        with:
+          args: "--release"
+          command: build
+
+      # Run cargo test (for release)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: actions-rs/cargo@v1
+        with:
+          args: "--release"
+          command: test
+
+      # TODO: Deploy to Docker Hub (if not skipped)
+
+      # Deploy the release artifacts to GitHub
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: magnesium-oxide (release)
+          path: target/release/magnesium-oxide
+
+      # Create a release on GitHub with the release notes
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: target/release/magnesium-oxide
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          name: ${{ steps.changelog.outputs.tag }}
+          prerelease: false
+          tag: ${{ steps.changelog.outputs.tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+name: Build and Deploy
+"on":
+  push:
+    branches:
+      - main
