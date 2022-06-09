@@ -17,7 +17,7 @@ RUN mkdir -p /usr/local/share/magnesium
 RUN cp /magnesium-oxide/target/release/magnesium-oxide /usr/local/share/magnesium/magnesium-oxide
 
 # Make the binary executable
-RUN chmod +x /usr/local/bin/magnesium-oxide
+RUN chmod +x /usr/local/share/magnesium/magnesium-oxide
 
 # Clean up
 RUN rm -rf /magnesium-oxide
