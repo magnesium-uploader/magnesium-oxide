@@ -50,6 +50,10 @@ jobs:
           args: "--release"
           command: test
 
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Move target/release/magnesium-oxide to root
+        run: cp -r target/release/magnesium-oxide .
+
       - name: Where am I?
         run: echo "I am in $(pwd)"
 

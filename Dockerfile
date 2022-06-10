@@ -11,15 +11,15 @@ RUN mkdir /srv/magnesium
 RUN chown magnesium:magnesium /srv/magnesium
 
 # Copy the binary to the directory
-ADD --chown=magnesium:magnesium . /srv/magnesium
+ADD --chown=magnesium:magnesium magnesium-oxide /srv/magnesium
 
 RUN ls -la /srv/magnesium
 
 # Set the permissions
-RUN chmod +x /srv/magnesium/target/release/magnesium-oxide
+RUN chmod +x /srv/magnesium/magnesium-oxide
 
 # Set the working directory the executable will run in
-WORKDIR /srv/magnesium/target/release
+WORKDIR /srv/magnesium/
 
 # Run the binary
-CMD ["/srv/magnesium/target/release/magnesium-oxide"]
+CMD ["/srv/magnesium/magnesium-oxide"]
