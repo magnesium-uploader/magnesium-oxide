@@ -1,3 +1,12 @@
+## [0.3.2](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.1...v0.3.2) (2022-06-10)
+
+
+### Bug Fixes
+
+* :test_tube: testing ([efd7556](https://github.com/magnesium-uploader/magnesium-oxide/commit/efd75567bba06badfa32cf0c3d568fb06876d3c8))
+
+
+
 ## [0.3.1](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.0...v0.3.1) (2022-06-10)
 
 
