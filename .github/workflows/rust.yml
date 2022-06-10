@@ -22,6 +22,9 @@ jobs:
           version-file: Cargo.toml
           version-path: package.version
 
+      - name: Where am I?
+        run: echo "I am in $(pwd)"
+
       # Load the rust toolchain
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         uses: actions-rs/toolchain@v1
@@ -47,6 +50,9 @@ jobs:
           args: "--release"
           command: test
 
+      - name: Where am I?
+        run: echo "I am in $(pwd)"
+
       # Setup Docker Buildx
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Set up Docker Buildx
@@ -59,6 +65,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Where am I?
+        run: echo "I am in $(pwd)"
 
       # Build the image
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
