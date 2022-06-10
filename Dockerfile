@@ -1,31 +1,23 @@
 # Derive from alpine:3.x
-FROM alpine:3
+FROM alpine:latest
 
-# Install rust, cargo, and git
-RUN apk add --no-cache gcc musl-dev && apk add --no-cache rust cargo git
+# Create a user
+RUN addgroup -S magnesium && adduser -S magnesium -G magnesium
 
-# Clone the repository
-RUN git clone https://github.com/magnesium-uploader/magnesium-oxide.git /magnesium-oxide
+# Create a directory for magnesium
+RUN mkdir /srv/magnesium
 
-# Build magnesium-oxide for release
-RUN cd /magnesium-oxide && cargo build --release
+# Chown the directory to the user
+RUN chown magnesium:magnesium /srv/magnesium
 
-# Create the directory for magnesium-oxide's data
-RUN mkdir -p /usr/local/share/magnesium
+# Copy the binary to the directory
+COPY --chown=magnesium:magnesium magnesium-oxide/target/release/magnesium-oxide /srv/magnesium/magnesium-oxide
 
-# Copy the binary to the container
-RUN cp /magnesium-oxide/target/release/magnesium-oxide /usr/local/share/magnesium/magnesium-oxide
-
-# Make the binary executable
-RUN chmod +x /usr/local/share/magnesium/magnesium-oxide
-
-# Clean up
-RUN rm -rf /magnesium-oxide
-RUN rm -rf /var/cache/apk/*
-
+# Set the permissions
+RUN chmod +x /srv/magnesium/magnesium-oxide
 
 # Set the working directory the executable will run in
-WORKDIR "/usr/local/share/magnesium"
+WORKDIR /srv/magnesium
 
 # Run the binary
-CMD ["/usr/local/share/magnesium/magnesium-oxide"]
+CMD ["/srv/magnesium/magnesium-oxide"]
