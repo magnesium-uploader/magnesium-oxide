@@ -1,3 +1,12 @@
+## [0.3.11](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.10...v0.3.11) (2022-06-10)
+
+
+### Bug Fixes
+
+* pray to docker jesus ([1c8e274](https://github.com/magnesium-uploader/magnesium-oxide/commit/1c8e274497c5b44ca21847d9f979439244ed4a92))
+
+
+
 ## [0.3.10](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.9...v0.3.10) (2022-06-10)
 
 
