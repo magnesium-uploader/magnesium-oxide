@@ -89,7 +89,7 @@ jobs:
           tag: ${{ steps.changelog.outputs.tag }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-name: Build and Deploy
+name: Build and Deploy to DockerHub
 "on":
   push:
     branches:
