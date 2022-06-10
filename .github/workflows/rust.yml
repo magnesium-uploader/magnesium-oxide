@@ -53,6 +53,9 @@ jobs:
       - name: Where am I?
         run: echo "I am in $(pwd)"
 
+      - name: Where is everything else?
+        run: ls -la
+
       # Setup Docker Buildx
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Set up Docker Buildx

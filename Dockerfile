@@ -11,7 +11,7 @@ RUN mkdir /srv/magnesium
 RUN chown magnesium:magnesium /srv/magnesium
 
 # Copy the binary to the directory
-COPY --chown=magnesium:magnesium . /srv/magnesium
+COPY --chown=magnesium:magnesium ./target /srv/magnesium
 
 RUN ls -la /srv/magnesium
 
