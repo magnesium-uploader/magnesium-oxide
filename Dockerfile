@@ -11,7 +11,7 @@ RUN mkdir /srv/magnesium
 RUN chown magnesium:magnesium /srv/magnesium
 
 # Copy the binary to the directory
-COPY --chown=magnesium:magnesium magnesium-oxide/target/release/magnesium-oxide /srv/magnesium/magnesium-oxide
+COPY --chown=magnesium:magnesium /home/runner/work/magnesium-oxide/magnesium-oxide/target/release/magnesium-oxide /srv/magnesium/
 
 # Set the permissions
 RUN chmod +x /srv/magnesium/magnesium-oxide
