@@ -4,6 +4,8 @@ FROM alpine:latest
 # Create a user
 RUN addgroup -S magnesium && adduser -S magnesium -G magnesium
 
+RUN ls
+
 # Create a directory for magnesium
 RUN mkdir /srv/magnesium
 
