@@ -47,18 +47,6 @@ jobs:
           args: "--release"
           command: test
 
-      # Create a directory for the Dockerfile
-      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        name: Create Docker Directory
-        run: |
-          mkdir -p /srv/magnesium-oxide
-
-      # Copy the artifacts to the Docker directory
-      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        name: Copy the artifacts to the docker step
-        run: |
-          cp target/release/magnesium-oxide /srv/magnesium-oxide
-
       # Setup Docker Buildx
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Set up Docker Buildx

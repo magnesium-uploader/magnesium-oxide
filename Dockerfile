@@ -4,8 +4,6 @@ FROM alpine:latest
 # Create a user
 RUN addgroup -S magnesium && adduser -S magnesium -G magnesium
 
-RUN ls
-
 # Create a directory for magnesium
 RUN mkdir /srv/magnesium
 
@@ -13,7 +11,7 @@ RUN mkdir /srv/magnesium
 RUN chown magnesium:magnesium /srv/magnesium
 
 # Copy the binary to the directory
-COPY --chown=magnesium:magnesium /srv/magnesium/magnesium-oxide /srv/magnesium
+COPY --chown=magnesium:magnesium /home/runner/work/magnesium-oxide/magnesium-oxide/magnesium-oxide /srv/magnesium
 
 # Set the permissions
 RUN chmod +x /srv/magnesium/magnesium-oxide
