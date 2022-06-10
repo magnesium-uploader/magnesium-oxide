@@ -1,3 +1,12 @@
+## [0.3.9](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.8...v0.3.9) (2022-06-10)
+
+
+### Bug Fixes
+
+* dofskdhglergpjgbert' ([4841992](https://github.com/magnesium-uploader/magnesium-oxide/commit/484199218835b57c37344f9f8a248ede4dc457d8))
+
+
+
 ## [0.3.8](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.3.7...v0.3.8) (2022-06-10)
 
 
