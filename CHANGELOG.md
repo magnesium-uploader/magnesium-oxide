@@ -1,3 +1,12 @@
+## [0.4.8](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.7...v0.4.8) (2022-06-11)
+
+
+### Bug Fixes
+
+* I literally forgot to add the key to `authorized_keys` ([36bb270](https://github.com/magnesium-uploader/magnesium-oxide/commit/36bb2704be0f322b7e0cb3e0048d5c76c92f1cca))
+
+
+
 ## [0.4.7](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.6...v0.4.7) (2022-06-11)
 
 
