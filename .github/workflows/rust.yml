@@ -29,7 +29,7 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      # Load any cache stored by rust-cache
+      # Load any cache stored by rust-cache.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         uses: Swatinem/rust-cache@v1
 
