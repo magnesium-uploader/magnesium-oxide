@@ -4,7 +4,7 @@
 
 ## ❔ What is this?
 
-Magnesium-Oxide (MGO) is a secure file uploader with support for ShareX.
+Magnesium-Oxide (MGO) is a secure file uploader for ShareX.
 
 ## 🌠 Features
 
