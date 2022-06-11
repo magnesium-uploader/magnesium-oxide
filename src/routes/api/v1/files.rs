@@ -237,11 +237,9 @@ pub async fn delete_file(
                 .delete_one(doc! {"_id": file._id}, None)
                 .await
                 .unwrap();
-            return Ok(HttpResponse::Ok().body("File deleted"));
+            Ok(HttpResponse::Ok().body("File deleted"))
         }
-        Err(_) => {
-            return Ok(HttpResponse::InternalServerError().body("Failed to delete file"));
-        }
+        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to delete file")),
     }
 }
 
