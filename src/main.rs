@@ -10,7 +10,6 @@ pub mod modules;
 pub mod routes;
 
 use actix_web::{
-    middleware::Logger,
     web::{self, ServiceConfig},
     App, HttpServer,
 };
@@ -77,7 +76,6 @@ async fn main() {
                 config: config.clone(),
                 database: database.clone(),
             })
-            .wrap(Logger::default())
             .configure(routes)
     })
     .bind(format!("{}:{}", _config.server.host, _config.server.port))
