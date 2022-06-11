@@ -65,7 +65,7 @@ jobs:
         name: Stopping magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl stop magnesium"
 
-      # Deploy the release via rsync.
+      # Deploy the release via rsync
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Deploy with rsync
         run: rsync -avz ./target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide
