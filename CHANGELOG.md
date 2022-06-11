@@ -1,3 +1,12 @@
+## [0.4.6](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.5...v0.4.6) (2022-06-11)
+
+
+### Bug Fixes
+
+* trigger actions ([e341323](https://github.com/magnesium-uploader/magnesium-oxide/commit/e3413231a6ae60daa8bf69f1b8ae3a207b5b0440))
+
+
+
 ## [0.4.5](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.4...v0.4.5) (2022-06-11)
 
 
