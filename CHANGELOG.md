@@ -1,4 +1,13 @@
-# 0.4.0 (2022-06-11)
+## [0.4.1](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.0...v0.4.1) (2022-06-11)
+
+
+### Bug Fixes
+
+* :bug: Copilot was right ([91b5b68](https://github.com/magnesium-uploader/magnesium-oxide/commit/91b5b68adf234fca41ce18d1b4cfe7bab5483a82))
+
+
+
+# [0.4.0](https://github.com/magnesium-uploader/magnesium-oxide/compare/4612f8d13d5ecbd999ddb35e8127a4b9c1e5340a...v0.4.0) (2022-06-11)
 
 
 ### Bug Fixes
