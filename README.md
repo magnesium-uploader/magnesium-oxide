@@ -1,6 +1,6 @@
 # Magnesium Oxide
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ChecksumDev/magnesium-oxide?label=Release) [![Build and Deploy](https://github.com/ChecksumDev/magnesium-oxide/actions/workflows/rust.yml/badge.svg)](https://github.com/ChecksumDev/magnesium-oxide/actions/workflows/rust.yml) ![Discord](https://img.shields.io/discord/954224598570926110?label=Discord&logo=DISCORD) ![coffee](https://img.shields.io/badge/Made%20with-Coffee-a27250?logo=CoffeeScript)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ChecksumDev/magnesium-oxide?label=Release) [![Build and Deploy](https://github.com/ChecksumDev/magnesium-oxide/actions/workflows/rust.yml/badge.svg)](https://github.com/ChecksumDev/magnesium-oxide/actions/workflows/rust.yml) ![Discord](https://img.shields.io/discord/984852897051312159?label=Discord&logo=DISCORD) ![coffee](https://img.shields.io/badge/Made%20with-Coffee-a27250?logo=CoffeeScript)
 
 ## ❔ What is this?
 
