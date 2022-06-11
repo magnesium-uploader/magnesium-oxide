@@ -1,3 +1,12 @@
+## [0.4.4](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.3...v0.4.4) (2022-06-11)
+
+
+### Bug Fixes
+
+* :bug: trigger actions, invalid ssh ([d0c21f8](https://github.com/magnesium-uploader/magnesium-oxide/commit/d0c21f89b9bb2c606ce6120b5d3f16c0cdbbddf2))
+
+
+
 ## [0.4.3](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.2...v0.4.3) (2022-06-11)
 
 
