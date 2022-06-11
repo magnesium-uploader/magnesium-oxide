@@ -1,30 +1,37 @@
-# Derive from alpine:3.x
-FROM alpine:3
+# Derive from debian image
+FROM debian:bullseye-slim
 
-# Install rust, cargo, and git
-RUN apk add --no-cache gcc musl-dev && apk add --no-cache rust cargo git
+RUN apt update && apt install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common \
+    build-essential
 
-# Clone the repository
-RUN git clone https://github.com/magnesium-uploader/magnesium-oxide.git /magnesium-oxide
+# Create a user for the container called "magnesium"
+RUN useradd -m -s /bin/bash magnesium
 
-# Build magnesium-oxide for release
-RUN cd /magnesium-oxide && cargo build --release
+# Create a directory to hold oxide
+RUN mkdir /srv/magnesium
 
-# Copy the binary to the container
-RUN cp /magnesium-oxide/target/release/magnesium-oxide /usr/local/share/magnesium/magnesium-oxide
+# Chown the directory to the magnesium user
+RUN chown magnesium:magnesium /srv/magnesium
 
-# Make the binary executable
-RUN chmod +x /usr/local/bin/magnesium-oxide
+# Set the current working directory to the oxide directory
+WORKDIR /srv/magnesium
 
-# Clean up
-RUN rm -rf /magnesium-oxide
-RUN rm -rf /var/cache/apk/*
+# Change into the magnesium user
+RUN su - magnesium
 
-# Create the directory for magnesium-oxide's data
-RUN mkdir -p /usr/local/share/magnesium
+# Copy the executable file to the container
+COPY --chown=magnesium:magnesium ./target/release/magnesium-oxide .
 
-# Set the working directory the executable will run in
-WORKDIR "/usr/local/share/magnesium"
+# Make the file executable
+RUN chmod +x magnesium-oxide
 
-# Run the binary
-CMD ["/usr/local/share/magnesium/magnesium-oxide"]
+# Expose the port 8080
+EXPOSE 8080 
+
+# Run the executable file
+CMD ["./magnesium-oxide"]
