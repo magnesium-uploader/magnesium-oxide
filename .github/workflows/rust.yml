@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build and push the image to Docker Hub
+      # Build and push the image to Docker Hub.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Build and push
         uses: docker/build-push-action@v3
