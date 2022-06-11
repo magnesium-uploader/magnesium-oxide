@@ -70,7 +70,7 @@ jobs:
         name: Deploy with rsync
         run: rsync -avz ./target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide
 
-      # Start the "magnesium" systemd service over ssh
+      # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Starting magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl start magnesium"
