@@ -63,7 +63,7 @@ jobs:
       # Stop the "magnesium" systemd service over ssh
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Stopping magnesium
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl stop magnesium"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl stop magnesium"
 
       # Deploy the release via rsync
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
@@ -73,7 +73,7 @@ jobs:
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Starting magnesium
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "systemctl start magnesium"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl start magnesium"
 
       # Deploy the release artifacts to GitHub
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
