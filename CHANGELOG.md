@@ -1,3 +1,12 @@
+## [0.4.3](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.2...v0.4.3) (2022-06-11)
+
+
+### Bug Fixes
+
+* :rocket: Deploy! ([6407915](https://github.com/magnesium-uploader/magnesium-oxide/commit/64079153c0f58ddde4da97c7cd25a5e097fac562))
+
+
+
 ## [0.4.2](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.1...v0.4.2) (2022-06-11)
 
 
