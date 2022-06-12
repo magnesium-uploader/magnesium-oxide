@@ -8,6 +8,8 @@
 pub mod modules;
 /// All routes used by the program
 pub mod routes;
+/// Common structs used by the program
+pub mod structs;
 
 use actix_web::{
     web::{self, ServiceConfig},

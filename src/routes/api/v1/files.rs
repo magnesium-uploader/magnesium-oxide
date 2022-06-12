@@ -4,14 +4,13 @@ use actix_web::{
     Error, HttpRequest, HttpResponse, Result,
 };
 use base64::URL_SAFE_NO_PAD;
-use bson::{doc, oid::ObjectId, serde_helpers::chrono_datetime_as_bson_datetime};
+use bson::{doc, oid::ObjectId};
 use bytes::{Bytes, BytesMut};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use futures_util::{StreamExt, TryStreamExt};
 use serde_json::json;
 use tokio::fs::*;
 
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
@@ -19,23 +18,13 @@ use crate::{
         crypto::{decrypt_bytes, encrypt_bytes, generate_key, EncryptionKey},
         hashing::{hash_bytes, hash_string},
     },
+    structs::users::User,
+    structs::{
+        files::{File, FileDeleteRequest, FileGetRequest},
+        Privileges,
+    },
     AppState,
 };
-
-use super::users::{Privileges, User};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct File {
-    _id: ObjectId,
-    filename: String,
-    mimetype: String,
-    uploader: ObjectId,
-    hash: String,
-    dkey: String, // hashed deletion key
-    size: i64,
-    #[serde(with = "chrono_datetime_as_bson_datetime")]
-    created_at: DateTime<Utc>,
-}
 
 /// Endpoint for uploading files to magnesium-oxide using ShareX
 pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<HttpResponse> {
@@ -189,19 +178,10 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
     })))
 }
 
-/// Option struct for deleting files
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DeleteFileOptions {
-    /// Hash of the file to delete
-    pub hash: String,
-    /// Deletion key
-    pub dkey: String,
-}
-
 /// Endpoint for deleting files from magnesium-oxide using ShareX
 pub async fn delete_file(
     request: HttpRequest,
-    data: Query<DeleteFileOptions>,
+    data: Query<FileDeleteRequest>,
 ) -> Result<HttpResponse> {
     let state = request.app_data::<AppState>().unwrap();
     let dkey = hash_string(&data.dkey);
@@ -243,20 +223,11 @@ pub async fn delete_file(
     }
 }
 
-/// File decryption key and nonce for viewing files
-#[derive(Debug, Deserialize)]
-pub struct FileAuth {
-    /// Decryption key
-    pub key: String,
-    /// Nonce
-    pub nonce: String,
-}
-
 /// Endpoint for viewing files from magnesium-oxide using ShareX
 pub async fn get_file(
     request: HttpRequest,
+    auth: Query<FileGetRequest>,
     hash: Path<String>,
-    auth: Query<FileAuth>,
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
 

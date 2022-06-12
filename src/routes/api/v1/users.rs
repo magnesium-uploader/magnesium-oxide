@@ -1,116 +1,28 @@
 use std::str::FromStr;
 
-use actix_web::{web::Form, Error, HttpRequest, HttpResponse, Result};
+use actix_web::{
+    web::{Form, Header},
+    Error, HttpRequest, HttpResponse, Result,
+};
 
-use bson::{doc, oid::ObjectId, serde_helpers::chrono_datetime_as_bson_datetime};
+use bson::{doc, oid::ObjectId};
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::fs::{self};
-use uuid::Uuid;
 
-use crate::{modules::hashing::hash_string, AppState};
+use crate::{
+    structs::{
+        users::{User, UserCreateRequest, UserIdRequest},
+        AuthorizationHeader, Privileges,
+    },
+    AppState,
+};
 
-bitflags::bitflags! {
-    /// Bitflags! struct for user privileges
-    #[derive(Serialize, Deserialize)]
-    pub struct Privileges: u32 {
-        /// User has full access to the API
-        const ADMIN = 1;
-        /// User can upload files, and delete their own files
-        const USER = 2;
-    }
-}
-
-impl Default for Privileges {
-    fn default() -> Self {
-        Privileges::USER
-    }
-}
-
-/// User subquota struct
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserQuota {
-    /// Total size of all files uploaded by the user
-    pub used: i64,
-    /// Available space for the user
-    pub available: i64,
-}
-
-/// User struct
-#[derive(Debug, Serialize, Deserialize)]
-pub struct User {
-    /// User's unique ObjectId
-    pub _id: ObjectId,
-    /// Username
-    pub username: String,
-    /// Email
-    pub email: String,
-    /// Hashed password
-    pub password: String, //? SHA3-512 hash
-    /// Quota for the user
-    pub quota: UserQuota,
-    /// Privileges bitflags
-    pub privileges: Privileges,
-    /// API Token
-    pub token: String, //? SHA3-512 hash
-    /// The DateTime<Utc> when the user was created
-    #[serde(with = "chrono_datetime_as_bson_datetime")]
-    pub created_at: DateTime<Utc>,
-    /// The DateTime<Utc> when the user last uploaded a file
-    #[serde(with = "chrono_datetime_as_bson_datetime")]
-    pub updated_at: DateTime<Utc>,
-}
-
-impl User {
-    /// Creates a new user from `username`, `email`, `password`, and `token`.
-    pub fn from<T>(username: T, password: T, email: T, token: T) -> User
-    where
-        T: Into<String>,
-    {
-        User {
-            _id: ObjectId::new(),
-            username: username.into(),
-            password: hash_string(password.into()),
-            email: email.into(),
-            quota: User::default_quota(),
-            token: hash_string(token.into()),
-            privileges: Privileges::default(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        }
-    }
-
-    /// Generates a default UserQuota with 100MB of available space
-    pub fn default_quota() -> UserQuota {
-        UserQuota {
-            used: 0,
-            available: 100 * 1024 * 1024,
-        }
-    }
-
-    /// Generates an API token for the user
-    pub fn generate_token() -> String {
-        Uuid::new_v4().to_string()
-    }
-}
-
-/// Endpoint options for creating a new user
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserRequest {
-    /// The username of the user you are creating
-    pub username: String,
-    /// The password of the user you are creating
-    pub password: String,
-    /// The email of the user you are creating
-    pub email: String,
-}
-
-/// Endpoint for creating a new user in the database
+/// This endpoint creates a new user in the database and initializes their storage,
+/// the user is returned with a token that can be used for authorization in subsequent requests.
 pub async fn create_user(
     request: HttpRequest,
-    data: Form<UserRequest>,
+    data: Form<UserCreateRequest>,
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
@@ -134,29 +46,23 @@ pub async fn create_user(
     Ok(HttpResponse::Created().json(json!({ "token": token })))
 }
 
-/// Endpoint options for viewing a user
-pub struct UserIdRequest {
-    /// the ObjectID (in hex) of the user you are viewing
-    pub id: String,
-}
-
-/// Endpoint for viewing a user in the database
+/// This endpoint returns a user's information if the requestee has administrative privileges.
 pub async fn get_user(
     request: HttpRequest,
     data: Form<UserIdRequest>,
+    headers: &Header<AuthorizationHeader>,
 ) -> Result<HttpResponse, Error> {
+    if headers.authorization.is_none() {
+        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+    }
+
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
 
-    let auth_header = match request.headers().get("Authorization") {
-        Some(header) => header.to_str().unwrap(),
-        None => {
-            return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
-        }
-    };
+    let auth_token = headers.authorization.clone().unwrap();
 
     let requester = users
-        .find_one(doc! {"token": auth_header}, None)
+        .find_one(doc! {"token": auth_token}, None)
         .await
         .unwrap();
 
@@ -184,4 +90,104 @@ pub async fn get_user(
     }
 
     Ok(HttpResponse::Ok().json(user.unwrap()))
+}
+
+/// This endpoint deletes a user from the database if one of the following conditions are met:
+/// 1. The requestee has administrative privileges.
+/// 2. The requestee is deleting their own account.
+///
+/// **Note:** The user must specify a valid ObjectId and authorize with a valid token.
+pub async fn delete_user(
+    request: HttpRequest,
+    data: Form<UserIdRequest>,
+    headers: &Header<AuthorizationHeader>,
+) -> Result<HttpResponse, Error> {
+    // If there is no authorization header, return unauthorized
+    if headers.authorization.is_none() {
+        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+    }
+
+    // Get the authorization header
+    let auth_token = headers.authorization.clone().unwrap();
+
+    // Get the database
+    let state = request.app_data::<AppState>().unwrap();
+    let users = state.database.collection::<User>("users");
+
+    // Find the user with the specified token
+    let requester = users
+        .find_one(doc! {"token": auth_token}, None)
+        .await
+        .unwrap();
+
+    // If the user is not found, return unauthorized
+    if requester.is_none() {
+        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+    }
+
+    // Get the requester
+    let requester = requester.unwrap();
+
+    // Get the desired user
+    let user = users
+        .find_one(doc! {"_id": ObjectId::from_str(&data.id).unwrap()}, None)
+        .await
+        .unwrap();
+
+    if user.is_none() {
+        return Ok(HttpResponse::NotFound().body("Not Found"));
+    }
+
+    let user = user.unwrap();
+
+    // check if the user to be deleted is the same user as the requester
+    // if so, the user is deleting themselves, so no need to check for privileges
+    if requester._id.to_hex() == user._id.to_hex() {
+        let db_result = users.delete_one(doc! {"_id": user._id}, None).await;
+
+        if db_result.is_err() {
+            return Ok(HttpResponse::InternalServerError()
+                .body("There was an error deleting the user from the database"));
+        }
+
+        let fs_result = fs::remove_dir_all(format!(
+            "{}/{}",
+            state.config.storage.path,
+            user._id.to_hex()
+        ))
+        .await;
+
+        if fs_result.is_err() {
+            return Ok(HttpResponse::InternalServerError()
+                .body("There was an error deleting the user's storage directory"));
+        }
+
+        return Ok(HttpResponse::NoContent().body("Deleted"));
+    }
+
+    // If the user is not the same user as the requester, check if the requester has admin privileges
+    if !requester.privileges.contains(Privileges::ADMIN) {
+        return Ok(HttpResponse::Forbidden().body("Forbidden"));
+    }
+
+    let db_result = users.delete_one(doc! {"_id": user._id}, None).await;
+
+    if db_result.is_err() {
+        return Ok(HttpResponse::InternalServerError()
+            .body("There was an error deleting the user from the database"));
+    }
+
+    let fs_result = fs::remove_dir_all(format!(
+        "{}/{}",
+        state.config.storage.path,
+        user._id.to_hex()
+    ))
+    .await;
+
+    if fs_result.is_err() {
+        return Ok(HttpResponse::InternalServerError()
+            .body("There was an error deleting the user's storage directory"));
+    }
+
+    Ok(HttpResponse::NoContent().body("Deleted"))
 }
