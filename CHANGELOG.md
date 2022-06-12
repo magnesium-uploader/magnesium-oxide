@@ -1,3 +1,12 @@
+## [0.5.1](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.5.0...v0.5.1) (2022-06-12)
+
+
+### Bug Fixes
+
+* :rocket: Send password to sudo, enabling automatic deployment! ([a516546](https://github.com/magnesium-uploader/magnesium-oxide/commit/a516546769bdafa7bdb487452ece1b94a2ddec5e))
+
+
+
 # [0.5.0](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.9...v0.5.0) (2022-06-12)
 
 
