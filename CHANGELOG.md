@@ -1,3 +1,12 @@
+# [0.5.0](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.9...v0.5.0) (2022-06-12)
+
+
+### Features
+
+* :sparkles: Add some information to the `/` route ([388f2f1](https://github.com/magnesium-uploader/magnesium-oxide/commit/388f2f1d97d9baa784bc0d17c3652dd651f5735a))
+
+
+
 ## [0.4.9](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.8...v0.4.9) (2022-06-11)
 
 
