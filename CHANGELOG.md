@@ -1,3 +1,12 @@
+## [0.4.9](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.8...v0.4.9) (2022-06-11)
+
+
+### Bug Fixes
+
+* Use `sudo` for systemctl commands ([255c3f5](https://github.com/magnesium-uploader/magnesium-oxide/commit/255c3f5ddb298af0475927efe9dbc72c199ade8f))
+
+
+
 ## [0.4.8](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.4.7...v0.4.8) (2022-06-11)
 
 
