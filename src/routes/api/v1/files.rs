@@ -9,7 +9,6 @@ use bytes::{Bytes, BytesMut};
 use chrono::Utc;
 use futures_util::{StreamExt, TryStreamExt};
 use serde_json::json;
-use tokio::fs::*;
 
 use uuid::Uuid;
 
@@ -26,7 +25,7 @@ use crate::{
     AppState,
 };
 
-/// Endpoint for uploading files to magnesium-oxide using ShareX
+/// Endpoint for uploading files.
 pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<HttpResponse> {
     let state = request.app_data::<AppState>().unwrap();
 
@@ -63,6 +62,7 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
         );
     }
 
+    let storage = state.storage.module.clone();
     let mut file_name = String::new();
     let mut file_mimetype = String::new();
     let mut file_bytes = vec![];
@@ -106,21 +106,6 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
             .body("The file you are trying to upload would exceed your available quota"));
     }
 
-    let file_path = format!(
-        "{}/{}/{}.mgo",
-        state.config.storage.path,
-        uploader._id.to_hex(),
-        file_hash
-    );
-
-    match write(file_path, file_bytes).await {
-        Ok(_) => {}
-        Err(_) => {
-            return Ok(HttpResponse::InternalServerError()
-                .body("Failed to upload file, please try again later"));
-        }
-    }
-
     let dkey = Uuid::new_v4().to_string();
 
     let file = File {
@@ -134,48 +119,42 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
         created_at: Utc::now(),
     };
 
+    storage
+        .put_file(file.uploader.to_hex().as_str(), &file_hash, &file_bytes)
+        .await?;
+
     let key_str = base64::encode_config(crypto.key, URL_SAFE_NO_PAD);
     let nonce_str = base64::encode_config(crypto.nonce, URL_SAFE_NO_PAD);
 
-    let existing_file = files
+    let file_check = files
         .find_one(doc! {"hash": &file_hash}, None)
         .await
         .unwrap();
 
-    if existing_file.is_some() {
+    if file_check.is_none() {
+        files.insert_one(&file, None).await.unwrap();
+
+        users
+        .update_one(
+            doc! {"_id": uploader._id},
+            doc! {"$set": {"quota.used": uploader.quota.used + file_size, "updated_at": file.created_at}},
+            None,
+        ).await.unwrap();
+    } else {
         files
-            .delete_one(doc! {"_id": existing_file.unwrap()._id}, None)
+            .delete_one(doc! {"_id": file_check.unwrap()._id}, None)
             .await
             .unwrap();
         files.insert_one(file, None).await.unwrap();
-
-        return Ok(HttpResponse::Ok().json(json!({
-            "hash": file_hash,
-            "ext": file_name.split('.').last().unwrap(),
-            "key": key_str,
-            "nonce": nonce_str,
-            "dkey": &dkey,
-        })));
     }
 
-    users
-    .update_one(
-        doc! {"_id": uploader._id},
-        doc! {"$set": {"quota.used": uploader.quota.used + file_size, "updated_at": file.created_at}},
-        None,
-    )
-    .await
-        .unwrap();
-
-    files.insert_one(file, None).await.unwrap();
-
-    Ok(HttpResponse::Created().json(json!({
+    return Ok(HttpResponse::Created().json(json!({
         "hash": file_hash,
         "ext": file_name.split('.').last().unwrap(),
         "key": key_str,
         "nonce": nonce_str,
         "dkey": dkey
-    })))
+    })));
 }
 
 /// Endpoint for deleting files from magnesium-oxide using ShareX
@@ -184,9 +163,10 @@ pub async fn delete_file(
     data: Query<FileDeleteRequest>,
 ) -> Result<HttpResponse> {
     let state = request.app_data::<AppState>().unwrap();
-    let dkey = hash_string(&data.dkey);
-
     let files = state.database.collection::<File>("files");
+    let storage = state.storage.module.clone();
+
+    let dkey = hash_string(&data.dkey);
 
     let file = files
         .find_one(doc! {"hash": &data.hash}, None)
@@ -204,75 +184,69 @@ pub async fn delete_file(
         return Ok(HttpResponse::Unauthorized().body("Invalid deletion key"));
     }
 
-    match remove_file(format!(
-        "{}/{}/{}.mgo",
-        state.config.storage.path,
-        file.uploader.to_hex(),
-        file.hash
-    ))
-    .await
-    {
-        Ok(_) => {
-            files
-                .delete_one(doc! {"_id": file._id}, None)
-                .await
-                .unwrap();
-            Ok(HttpResponse::Ok().body("File deleted"))
-        }
-        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to delete file")),
-    }
+    storage
+        .remove_file(file.uploader.to_hex().as_str(), &file.hash)
+        .await?;
+
+    files
+        .delete_one(doc! {"_id": file._id}, None)
+        .await
+        .unwrap();
+
+    return Ok(HttpResponse::NoContent().body(""));
 }
 
-/// Endpoint for viewing files from magnesium-oxide using ShareX
+/// Endpoint for viewing files
 pub async fn get_file(
     request: HttpRequest,
     auth: Query<FileGetRequest>,
     hash: Path<String>,
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
-
     let files = state.database.collection::<File>("files");
+    let storage = state.storage.module.clone();
 
-    let file = files
-        .find_one(doc! {"hash": hash.split('.').next().unwrap()}, None)
+    let hash = hash.into_inner();
+    let hash = hash.split('.').next().unwrap();
+
+    let file = match files.find_one(doc! {"hash": &hash}, None).await {
+        Ok(file) => {
+            if file.is_none() {
+                return Ok(HttpResponse::NotFound().body("The specified file does not exist"));
+            }
+            file.unwrap()
+        }
+        Err(_) => {
+            return Ok(
+                HttpResponse::InternalServerError().body("Failed to retrieve file from database")
+            );
+        }
+    };
+
+    let file_bytes = match storage
+        .get_file(file.uploader.to_hex().as_str(), &file.hash)
         .await
-        .unwrap();
-
-    if file.is_none() {
-        return Ok(HttpResponse::NotFound().body("File not found"));
-    }
-
-    let file = file.unwrap();
-
-    let file_bytes = match read(format!(
-        "{}/{}/{}.mgo",
-        state.config.storage.path,
-        file.uploader.to_hex(),
-        file.hash
-    ))
-    .await
     {
-        Ok(bytes) => bytes,
+        Ok(bytes) => {
+            let file_bytes = Bytes::from(bytes);
+
+            let key = base64::decode_config(&auth.key, URL_SAFE_NO_PAD).unwrap();
+            let nonce = base64::decode_config(&auth.nonce, URL_SAFE_NO_PAD).unwrap();
+
+            let crypto = EncryptionKey { key, nonce };
+
+            match decrypt_bytes(&crypto, &file_bytes) {
+                Ok(dbytes) => dbytes,
+                Err(_) => {
+                    return Ok(HttpResponse::InternalServerError().body("Failed to decrypt file"));
+                }
+            }
+        }
         Err(_) => {
-            return Ok(HttpResponse::InternalServerError().body("Failed to read file"));
+            return Ok(HttpResponse::NotFound().body("The specified file does not exist"));
         }
     };
 
-    let file_bytes = Bytes::from(file_bytes);
-
-    let key = base64::decode_config(&auth.key, URL_SAFE_NO_PAD).unwrap();
-    let nonce = base64::decode_config(&auth.nonce, URL_SAFE_NO_PAD).unwrap();
-
-    let crypto = EncryptionKey { key, nonce };
-
-    let file_bytes = match decrypt_bytes(&crypto, &file_bytes) {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return Ok(HttpResponse::InternalServerError().body("Failed to decrypt file"));
-        }
-    };
-
-    //? Originally: Content-Disposition: attachment; filename="filename.ext"
     Ok(HttpResponse::Ok()
         .content_type(file.mimetype.clone())
         .append_header((

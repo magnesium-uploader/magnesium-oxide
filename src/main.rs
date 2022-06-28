@@ -2,7 +2,7 @@
 //! A Rust ShareX uploader made from the ground up with security in mind, providing millitary-grade encryption and a high-level API for uploading files to the server.
 
 #![forbid(unsafe_code)]
-#![warn(missing_docs)] // TODO: add docs
+#![warn(missing_docs, unreachable_pub, unused_qualifications)]
 
 /// All modules used by the program
 pub mod modules;
@@ -17,10 +17,9 @@ use actix_web::{
 };
 
 use log::{debug, error, info};
-use modules::config::Config;
+use modules::{config::Config, storage::Storage};
 use mongodb::{options::ClientOptions, Client, Database};
 use routes::{api::v1::files::*, api::v1::users::*, index::*};
-use tokio::fs;
 
 /// The actix_web AppState struct
 #[derive(Clone)]
@@ -29,6 +28,8 @@ pub struct AppState {
     pub config: Config,
     /// The MongoDB Database refrenced in all routes
     pub database: Database,
+    /// Storage module refrenced in all routes
+    pub storage: Storage,
 }
 
 fn routes(cfg: &mut ServiceConfig) {
@@ -69,20 +70,23 @@ async fn main() {
 
     let database = client.database(&config.database.db_name);
 
-    fs::create_dir_all(&config.storage.path).await.unwrap();
+    let storage = Storage::default();
 
-    info!("Starting server...");
-    HttpServer::new(move || {
-        App::new()
-            .app_data(AppState {
-                config: config.clone(),
-                database: database.clone(),
-            })
-            .configure(routes)
-    })
-    .bind(format!("{}:{}", _config.server.host, _config.server.port))
-    .unwrap()
-    .run()
-    .await
-    .unwrap();
+    let state = AppState {
+        config,
+        database,
+        storage,
+    };
+
+    info!(
+        "Starting server on http://{}:{} ...",
+        _config.server.host, _config.server.port
+    );
+
+    HttpServer::new(move || App::new().app_data(state.clone()).configure(routes))
+        .bind(format!("{}:{}", _config.server.host, _config.server.port))
+        .unwrap()
+        .run()
+        .await
+        .unwrap();
 }

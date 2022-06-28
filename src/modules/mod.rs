@@ -6,3 +6,6 @@ pub mod crypto;
 
 /// Database module for storing files.
 pub mod hashing;
+
+/// Storage module for storing files locally and in S3.
+pub mod storage;
