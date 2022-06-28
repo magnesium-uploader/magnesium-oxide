@@ -8,10 +8,11 @@ use actix_web::{
 use bson::{doc, oid::ObjectId};
 
 use serde_json::json;
-use tokio::fs::{self};
 
 use crate::{
+    modules::storage::StorageModule,
     structs::{
+        files::File,
         users::{User, UserCreateRequest, UserIdRequest},
         AuthorizationHeader, Privileges,
     },
@@ -26,18 +27,19 @@ pub async fn create_user(
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
-    let token = User::generate_token();
+    let storage = state.storage.module.clone();
 
+    let token = User::generate_token();
     let user = User::from(&data.username, &data.password, &data.email, &token.clone());
 
     let result = users.insert_one(&user, None).await;
 
-    fs::create_dir(format!(
-        "{}/{}",
-        state.config.storage.path,
-        user._id.to_hex()
-    ))
-    .await?;
+    match storage {
+        StorageModule::Local(ref storage) => {
+            let path = format!("{}/{}", storage, user._id.to_hex());
+            tokio::fs::create_dir_all(&path).await?;
+        }
+    }
 
     if result.is_err() {
         return Ok(HttpResponse::InternalServerError().body("Internal Server Error"));
@@ -107,28 +109,24 @@ pub async fn delete_user(
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
 
-    // Get the authorization header
     let auth_token = headers.authorization.clone().unwrap();
 
-    // Get the database
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
+    let files = state.database.collection::<File>("files");
+    let storage = state.storage.module.clone();
 
-    // Find the user with the specified token
     let requester = users
         .find_one(doc! {"token": auth_token}, None)
         .await
         .unwrap();
 
-    // If the user is not found, return unauthorized
     if requester.is_none() {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
 
-    // Get the requester
     let requester = requester.unwrap();
 
-    // Get the desired user
     let user = users
         .find_one(doc! {"_id": ObjectId::from_str(&data.id).unwrap()}, None)
         .await
@@ -143,51 +141,67 @@ pub async fn delete_user(
     // check if the user to be deleted is the same user as the requester
     // if so, the user is deleting themselves, so no need to check for privileges
     if requester._id.to_hex() == user._id.to_hex() {
-        let db_result = users.delete_one(doc! {"_id": user._id}, None).await;
+        let user_result = users.delete_one(doc! {"_id": user._id}, None).await;
 
-        if db_result.is_err() {
+        if user_result.is_err() {
             return Ok(HttpResponse::InternalServerError()
                 .body("There was an error deleting the user from the database"));
         }
 
-        let fs_result = fs::remove_dir_all(format!(
-            "{}/{}",
-            state.config.storage.path,
-            user._id.to_hex()
-        ))
-        .await;
+        let files_result = files.delete_many(doc! {"uploader": user._id}, None).await;
 
-        if fs_result.is_err() {
+        if files_result.is_err() {
             return Ok(HttpResponse::InternalServerError()
-                .body("There was an error deleting the user's storage directory"));
+                .body("There was an error deleting the user's files from the database"));
         }
 
-        return Ok(HttpResponse::NoContent().body("Deleted"));
-    }
+        match storage {
+            StorageModule::Local(ref storage) => {
+                let path = format!("{}/{}", storage, user._id.to_hex());
+                match tokio::fs::remove_dir_all(&path).await {
+                    Ok(_) => {
+                        return Ok(HttpResponse::Ok().body("User deleted"));
+                    }
+                    Err(_) => {
+                        return Ok(HttpResponse::InternalServerError()
+                            .body("There was an error deleting the user's storage"));
+                    }
+                }
+            }
+        };
+    };
 
     // If the user is not the same user as the requester, check if the requester has admin privileges
     if !requester.privileges.contains(Privileges::ADMIN) {
         return Ok(HttpResponse::Forbidden().body("Forbidden"));
     }
 
-    let db_result = users.delete_one(doc! {"_id": user._id}, None).await;
+    let user_result = users.delete_one(doc! {"_id": user._id}, None).await;
 
-    if db_result.is_err() {
+    if user_result.is_err() {
         return Ok(HttpResponse::InternalServerError()
             .body("There was an error deleting the user from the database"));
     }
 
-    let fs_result = fs::remove_dir_all(format!(
-        "{}/{}",
-        state.config.storage.path,
-        user._id.to_hex()
-    ))
-    .await;
+    let files_result = files.delete_many(doc! {"uploader": user._id}, None).await;
 
-    if fs_result.is_err() {
+    if files_result.is_err() {
         return Ok(HttpResponse::InternalServerError()
-            .body("There was an error deleting the user's storage directory"));
+            .body("There was an error deleting the user's files from the database"));
     }
 
-    Ok(HttpResponse::NoContent().body("Deleted"))
+    match storage {
+        StorageModule::Local(ref storage) => {
+            let path = format!("{}/{}", storage, user._id.to_hex());
+            match tokio::fs::remove_dir_all(&path).await {
+                Ok(_) => {
+                    return Ok(HttpResponse::Ok().body("User deleted"));
+                }
+                Err(_) => {
+                    return Ok(HttpResponse::InternalServerError()
+                        .body("There was an error deleting the user's storage"));
+                }
+            }
+        }
+    };
 }
