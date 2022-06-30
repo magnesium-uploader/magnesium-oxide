@@ -1,3 +1,12 @@
+## [0.6.5](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.4...v0.6.5) (2022-06-30)
+
+
+### Bug Fixes
+
+* Deploy into srv/ as tar creates a new directory ([aef5fa7](https://github.com/magnesium-uploader/magnesium-oxide/commit/aef5fa72c78de18b3eff7f7c9a18ffeb7cd8c0a0))
+
+
+
 ## [0.6.4](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.3...v0.6.4) (2022-06-30)
 
 
