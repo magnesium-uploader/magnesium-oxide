@@ -1,3 +1,12 @@
+## [0.6.6](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.5...v0.6.6) (2022-06-30)
+
+
+### Bug Fixes
+
+* :art: Implement site metadata for root ([7fb52c6](https://github.com/magnesium-uploader/magnesium-oxide/commit/7fb52c63223f02227af3896b35a8f3db1e02d90b))
+
+
+
 ## [0.6.5](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.4...v0.6.5) (2022-06-30)
 
 
