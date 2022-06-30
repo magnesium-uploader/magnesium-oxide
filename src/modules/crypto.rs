@@ -6,6 +6,7 @@ use aes_gcm_siv::{
 };
 use bytes::{Bytes, BytesMut};
 use rand::{rngs::OsRng, Rng};
+use std::io::{Error, ErrorKind};
 
 /// Encryption key struct for use in the crypto functions.
 pub struct EncryptionKey {
@@ -48,8 +49,8 @@ pub fn encrypt_bytes(
     let data_crypt = match cipher.encrypt(nonce, data.as_ref()) {
         Ok(data) => BytesMut::from(data.as_slice()),
         Err(_) => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Box::new(Error::new(
+                ErrorKind::Other,
                 "Failed to encrypt data",
             )))
         }
@@ -69,8 +70,8 @@ pub fn decrypt_bytes(
     let data_decrypt = match cipher.decrypt(nonce, data.as_ref()) {
         Ok(data) => BytesMut::from(data.as_slice()),
         Err(_) => {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            return Err(Box::new(Error::new(
+                ErrorKind::Other,
                 "Failed to decrypt data",
             )))
         }
@@ -82,11 +83,31 @@ pub fn decrypt_bytes(
 #[test]
 fn test_crypto() {
     let crypto = generate_key();
+    let data = BytesMut::from("Hello World!");
 
-    let data = BytesMut::from("Hello World".as_bytes());
+    println!("{}", crypto);
 
-    let encrypted = encrypt_bytes(&crypto, &data).unwrap();
-    let decrypted = decrypt_bytes(&crypto, &encrypted).unwrap();
+    let encrypted = match encrypt_bytes(&crypto, &data) {
+        Ok(bytes) => {
+            println!("{:?}", bytes);
+            bytes
+        }
+        Err(err) => {
+            println!("{:?}", err);
+            panic!("Failed to encrypt data");
+        }
+    };
 
-    assert_eq!(data, decrypted);
+    let decrypted = match decrypt_bytes(&crypto, &encrypted) {
+        Ok(bytes) => {
+            println!("{:?}", bytes);
+            bytes
+        }
+        Err(err) => {
+            println!("{:?}", err);
+            panic!("Failed to decrypt data");
+        }
+    };
+
+    assert_eq!(data.as_ref(), decrypted.as_ref());
 }
