@@ -82,8 +82,8 @@ pub mod users {
         pub fn default_quota() -> UserQuota {
             UserQuota {
                 used: 0,
-                // TODO: Make available quota configurable (currently set to 1GB)
-                available: 1_073_741_824,
+                // TODO: Make default available quota configurable (currently set to 1GB)
+                available: 1024 * 1024 * 1024 * 8, // 8,589,934,592 bits
             }
         }
 
