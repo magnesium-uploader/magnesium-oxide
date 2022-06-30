@@ -1,3 +1,22 @@
+# [0.6.0](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.5.2...v0.6.0) (2022-06-30)
+
+
+### Bug Fixes
+
+* Default quota to 1GB in BITS, not BYTES ([70b0649](https://github.com/magnesium-uploader/magnesium-oxide/commit/70b064963095e837f3e856a2876ee4596c1d42ea))
+
+
+### Features
+
+* :sparkles: Introduce the Tera templating engine! ([d86a1ff](https://github.com/magnesium-uploader/magnesium-oxide/commit/d86a1ffac91579202a56cbdeb5a8a1a5eb8dc9e5))
+
+
+### Performance Improvements
+
+* Switch to Tera ([ace2f96](https://github.com/magnesium-uploader/magnesium-oxide/commit/ace2f96b24700670b50dccc74cf4c4921bad85b0))
+
+
+
 ## [0.5.2](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.5.1...v0.5.2) (2022-06-28)
 
 
