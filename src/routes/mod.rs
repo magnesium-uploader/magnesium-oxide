@@ -1,4 +1,4 @@
 /// All API endpoints
 pub mod api;
-/// Index route
-pub mod index;
+/// Frontend views
+pub mod views;

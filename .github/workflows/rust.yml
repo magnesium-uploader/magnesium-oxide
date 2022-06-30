@@ -65,30 +65,39 @@ jobs:
         name: Stopping magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} systemctl stop magnesium"
 
-      # Deploy the release via rsync
+      # Deploy the release binary via rsync
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Deploy with rsync
         run: rsync -avz ./target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide
+
+      # Deploy the release templates via rsync (folder)
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Deploy with rsync (folder)
+        run: rsync -avz ./templates ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates
 
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Starting magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} systemctl start magnesium"
 
+      # Zip the release binary and templates to upload to GitHub
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: zip -r magnesium-oxide.zip target/release/magnesium-oxide templates
+
       # Deploy the release artifacts to GitHub
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: magnesium-oxide (release)
-          path: target/release/magnesium-oxide
+          name: magnesium-oxide - ${{ steps.changelog.outputs.version }}
+          path: magnesium-oxide.zip
 
       # Create a release on GitHub with the release notes
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: target/release/magnesium-oxide
+          artifacts: magnesium-oxide.zip
           body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
           name: ${{ steps.changelog.outputs.tag }}

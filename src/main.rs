@@ -4,6 +4,8 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, unreachable_pub, unused_qualifications)]
 
+use tera::Tera;
+
 /// All modules used by the program
 pub mod modules;
 /// All routes used by the program
@@ -19,7 +21,23 @@ use actix_web::{
 use log::{debug, error, info};
 use modules::{config::Config, storage::Storage};
 use mongodb::{options::ClientOptions, Client, Database};
-use routes::{api::v1::files::*, api::v1::users::*, index::*};
+use routes::{api::v1::files::*, api::v1::users::*, views::index::*};
+
+extern crate tera;
+
+lazy_static::lazy_static! {
+    /// A struct containing all the templates used by Tera
+    pub static ref TEMPLATES: Tera = {
+        let tera = match Tera::new("templates/**/*") {
+            Ok(t) => t,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        };
+        tera
+    };
+}
 
 /// The actix_web AppState struct
 #[derive(Clone)]
@@ -30,6 +48,8 @@ pub struct AppState {
     pub database: Database,
     /// Storage module refrenced in all routes
     pub storage: Storage,
+    /// The Tera template engine refrenced in all frontend routes
+    pub tera: Tera,
 }
 
 fn routes(cfg: &mut ServiceConfig) {
@@ -76,6 +96,7 @@ async fn main() {
         config,
         database,
         storage,
+        tera: TEMPLATES.clone(),
     };
 
     info!(
