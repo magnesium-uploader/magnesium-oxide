@@ -73,7 +73,7 @@ jobs:
       # Deploy the release templates via rsync (folder)
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Deploy with rsync (folder)
-        run: rsync -avz ./templates ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates
+        run: rsync -avz ./src/templates ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates
 
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
@@ -82,7 +82,7 @@ jobs:
 
       # Zip the release binary and templates to upload to GitHub
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        run: zip -r magnesium-oxide.zip target/release/magnesium-oxide templates
+        run: zip -r magnesium-oxide.zip target/release/magnesium-oxide src/templates
 
       # Deploy the release artifacts to GitHub
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
