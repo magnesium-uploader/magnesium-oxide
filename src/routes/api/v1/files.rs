@@ -5,7 +5,7 @@ use actix_web::{
 };
 use base64::URL_SAFE_NO_PAD;
 use bson::{doc, oid::ObjectId};
-use bytes::{Bytes, BytesMut};
+use bytes::BytesMut;
 use chrono::Utc;
 use futures_util::{StreamExt, TryStreamExt};
 use serde_json::json;
@@ -65,12 +65,12 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
     let storage = state.storage.module.clone();
     let mut file_name = String::new();
     let mut file_mimetype = String::new();
-    let mut file_bytes = vec![];
+    let mut file_bits = vec![];
 
     // Retrieve the file from the multipart stream
     while let Some(mut field) = data.try_next().await.unwrap() {
         while let Some(chunk) = field.next().await {
-            file_bytes.extend_from_slice(&chunk?);
+            file_bits.extend_from_slice(&chunk?);
         }
 
         if field.name() != "file" {
@@ -85,11 +85,11 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
         file_mimetype = field.content_type().to_string();
     }
 
-    let file_hash = hash_bytes(&file_bytes);
-    let file_size = file_bytes.len() as i64;
+    let file_hash = hash_bytes(&file_bits);
+    let file_size = file_bits.len() as i64;
 
     let crypto = generate_key();
-    let file_bytes = match encrypt_bytes(&crypto, &BytesMut::from(file_bytes.as_slice())) {
+    let file_bits = match encrypt_bytes(&crypto, &BytesMut::from(file_bits.as_slice())) {
         Ok(bytes) => bytes,
         Err(_) => {
             return Ok(HttpResponse::InternalServerError().body("Failed to encrypt file"));
@@ -120,7 +120,7 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
     };
 
     storage
-        .put_file(file.uploader.to_hex().as_str(), &file_hash, &file_bytes)
+        .put_file(file.uploader.to_hex().as_str(), &file_hash, &file_bits)
         .await?;
 
     let key_str = base64::encode_config(crypto.key, URL_SAFE_NO_PAD);
@@ -193,7 +193,7 @@ pub async fn delete_file(
         .await
         .unwrap();
 
-    return Ok(HttpResponse::NoContent().body(""));
+    Ok(HttpResponse::NoContent().body(""))
 }
 
 /// Endpoint for viewing files
@@ -223,19 +223,17 @@ pub async fn get_file(
         }
     };
 
-    let file_bytes = match storage
+    let file_bits = match storage
         .get_file(file.uploader.to_hex().as_str(), &file.hash)
         .await
     {
         Ok(bytes) => {
-            let file_bytes = Bytes::from(bytes);
-
             let key = base64::decode_config(&auth.key, URL_SAFE_NO_PAD).unwrap();
             let nonce = base64::decode_config(&auth.nonce, URL_SAFE_NO_PAD).unwrap();
 
             let crypto = EncryptionKey { key, nonce };
 
-            match decrypt_bytes(&crypto, &file_bytes) {
+            match decrypt_bytes(&crypto, &bytes) {
                 Ok(dbytes) => dbytes,
                 Err(_) => {
                     return Ok(HttpResponse::InternalServerError().body("Failed to decrypt file"));
@@ -253,5 +251,5 @@ pub async fn get_file(
             "Content-Disposition",
             format!("filename=\"{}\"", file.filename),
         ))
-        .body(file_bytes))
+        .body(file_bits))
 }
