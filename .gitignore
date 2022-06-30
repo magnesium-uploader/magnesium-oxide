@@ -19,6 +19,6 @@ Cargo.lock
 /target
 
 # Oxide
-/data
+data/
 config.toml
 .vscode/launch.json
