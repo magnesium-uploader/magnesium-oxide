@@ -81,7 +81,7 @@ jobs:
       # Deploy the release tarball to the remote server via rsync
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Deploying release
-        run: rsync -avz magnesium-release.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/magnesium-release.tar
+        run: rsync -avz magnesium-release.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/magnesium-release.tar
 
       # Extract the release tarball on the remote server
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
