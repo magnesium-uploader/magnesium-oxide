@@ -1,3 +1,12 @@
+## [0.6.3](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.2...v0.6.3) (2022-06-30)
+
+
+### Bug Fixes
+
+* rsync, why? ([b8a8ade](https://github.com/magnesium-uploader/magnesium-oxide/commit/b8a8adecab2201f3caea9ea1511456fa5d3e5096))
+
+
+
 ## [0.6.2](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.6.1...v0.6.2) (2022-06-30)
 
 
