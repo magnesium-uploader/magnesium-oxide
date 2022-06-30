@@ -73,7 +73,7 @@ jobs:
       # Deploy the release templates via rsync (folder)
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Deploy with rsync (folder)
-        run: rsync -avz ./src/templates/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates
+        run: rsync -avz ./src/templates/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates/
 
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
