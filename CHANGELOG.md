@@ -1,3 +1,12 @@
+## [0.5.2](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.5.1...v0.5.2) (2022-06-28)
+
+
+### Bug Fixes
+
+* :bug: user's file metadata was not being deleted. ([31cb871](https://github.com/magnesium-uploader/magnesium-oxide/commit/31cb871a6d64e4a5685fdc9f6e07a26f6ff9d692))
+
+
+
 ## [0.5.1](https://github.com/magnesium-uploader/magnesium-oxide/compare/v0.5.0...v0.5.1) (2022-06-12)
 
 
