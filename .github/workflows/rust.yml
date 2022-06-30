@@ -55,6 +55,19 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: "placeholder"
 
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: mkdir magnesium-release/
+
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: cp -R src/templates/ magnesium-release/templates
+
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: cp target/release/magnesium-oxide magnesium-release/magnesium-oxide
+
+      # Tarball all the files in the release directory.
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: tar -czvf magnesium-release.tar magnesium-release/*
+
       # Set known hosts
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Adding Known Hosts
@@ -65,24 +78,20 @@ jobs:
         name: Stopping magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} systemctl stop magnesium"
 
-      # Deploy the release binary via rsync
+      # Deploy the release tarball to the remote server via rsync
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        name: Deploy with rsync
-        run: rsync -avz ./target/release/magnesium-oxide ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide
+        name: Deploying release
+        run: rsync -avz magnesium-release.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/magnesium-release.tar
 
-      # Deploy the release templates via rsync (folder)
+      # Extract the release tarball on the remote server
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        name: Deploy with rsync (folder)
-        run: rsync -avz ./src/templates/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/srv/magnesium-oxide/oxide/templates/
+        name: Extracting release
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} tar -xvzf /srv/magnesium-oxide/magnesium-release.tar -C /srv/magnesium-oxide/"
 
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Starting magnesium
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} systemctl start magnesium"
-
-      # Zip the release binary and templates to upload to GitHub
-      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        run: zip -r magnesium-oxide.zip target/release/magnesium-oxide src/templates/
 
       # Deploy the release artifacts to GitHub
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
@@ -90,14 +99,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: magnesium-oxide - ${{ steps.changelog.outputs.version }}
-          path: magnesium-oxide.zip
+          path: magnesium-release.tar
 
       # Create a release on GitHub with the release notes
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: magnesium-oxide.zip
+          artifacts: magnesium-release.tar
           body: ${{ steps.changelog.outputs.clean_changelog }}
           draft: false
           name: ${{ steps.changelog.outputs.tag }}
