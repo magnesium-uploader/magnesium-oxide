@@ -83,10 +83,15 @@ jobs:
         name: Deploying release
         run: rsync -avz magnesium-release.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/magnesium-release.tar
 
+      # Remove the binary and templates directory from the remote server.
+      - if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        name: Removing old release
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} rm -rf /srv/magnesium-release/magnesium-oxide /srv/magnesium-release/templates"
+
       # Extract the release tarball on the remote server
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
         name: Extracting release
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} tar -xvzf /srv/magnesium-oxide/magnesium-release.tar -C /srv/"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo -S <<< ${{ secrets.SSH_PASS }} tar -xvzf /tmp/magnesium-release.tar -C /srv/"
 
       # Start the "magnesium" systemd service over ssh.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
