@@ -4,8 +4,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, unreachable_pub, unused_qualifications)]
 
-use tera::Tera;
-
 /// All modules used by the program
 pub mod modules;
 /// All routes used by the program
@@ -22,8 +20,9 @@ use log::{debug, error, info};
 use modules::{config::Config, storage::Storage};
 use mongodb::{options::ClientOptions, Client, Database};
 use routes::{api::v1::files::*, api::v1::users::*, views::index::*};
+use tera::Tera;
 
-extern crate tera;
+use crate::modules::storage::S3Options;
 
 lazy_static::lazy_static! {
     /// A struct containing all the templates used by Tera
@@ -90,7 +89,21 @@ async fn main() {
 
     let database = client.database(&config.database.db_name);
 
-    let storage = Storage::default();
+    //? This is very hacky, but it works for now.
+    let storage;
+    if config.storage.local.enabled {
+        info!("Using local storage module");
+        storage = Storage::Local(config.storage.local.path.clone());
+    } else {
+        info!("Using S3 storage module");
+        storage = Storage::S3(S3Options {
+            bucket: config.storage.s3.bucket.clone(),
+            endpoint: config.storage.s3.endpoint.clone(),
+            region: config.storage.s3.region.clone(),
+            access_key: config.storage.s3.access_key.clone(),
+            secret_key: config.storage.s3.secret_key.clone(),
+        });
+    }
 
     let state = AppState {
         config,

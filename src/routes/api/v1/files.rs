@@ -62,7 +62,7 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
         );
     }
 
-    let storage = state.storage.module.clone();
+    let storage = state.storage.clone();
     let mut file_name = String::new();
     let mut file_mimetype = String::new();
     let mut file_bits = vec![];
@@ -164,7 +164,7 @@ pub async fn delete_file(
 ) -> Result<HttpResponse> {
     let state = request.app_data::<AppState>().unwrap();
     let files = state.database.collection::<File>("files");
-    let storage = state.storage.module.clone();
+    let storage = state.storage.clone();
 
     let dkey = hash_string(&data.dkey);
 
@@ -204,7 +204,7 @@ pub async fn get_file(
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
     let files = state.database.collection::<File>("files");
-    let storage = state.storage.module.clone();
+    let storage = state.storage.clone();
 
     let hash = hash.into_inner();
     let hash = hash.split('.').next().unwrap();

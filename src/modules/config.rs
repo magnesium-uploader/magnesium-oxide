@@ -23,13 +23,39 @@ pub struct ServerConfig {
     pub port: u16,
 }
 
+/// Storage configuration for Local
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct LocalStorageConfig {
+    /// If true, the storage module will be used.
+    pub enabled: bool,
+    /// The path where uploaded content will be stored
+    pub path: String,
+}
+
+/// Storage configuration for S3
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct S3StorageConfig {
+    /// If true, the storage module will be used.
+    pub enabled: bool,
+    /// The S3 bucket name
+    pub bucket: String,
+    /// Endpoint of the S3 bucket
+    pub endpoint: String,
+    /// Region of the S3 bucket
+    pub region: String,
+    /// The S3 access key
+    pub access_key: String,
+    /// The S3 secret key
+    pub secret_key: String,
+}
+
 /// Storage configuration
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct StorageConfig {
-    /// The path where uploaded content will be stored
-    pub path: String,
-    /// The maximum size of an uploaded file
-    pub max_size: u64,
+    /// Local storage configuration
+    pub local: LocalStorageConfig,
+    /// S3 storage configuration
+    pub s3: S3StorageConfig,
 }
 
 /// General configuration

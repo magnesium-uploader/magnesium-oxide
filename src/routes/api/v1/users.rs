@@ -10,7 +10,7 @@ use bson::{doc, oid::ObjectId};
 use serde_json::json;
 
 use crate::{
-    modules::storage::StorageModule,
+    modules::storage::Storage,
     structs::{
         files::File,
         users::{User, UserCreateRequest, UserIdRequest},
@@ -27,7 +27,7 @@ pub async fn create_user(
 ) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
-    let storage = state.storage.module.clone();
+    let storage = state.storage.clone();
 
     let token = User::generate_token();
     let user = User::from(&data.username, &data.password, &data.email, &token.clone());
@@ -35,9 +35,12 @@ pub async fn create_user(
     let result = users.insert_one(&user, None).await;
 
     match storage {
-        StorageModule::Local(ref storage) => {
+        Storage::Local(ref storage) => {
             let path = format!("{}/{}", storage, user._id.to_hex());
             tokio::fs::create_dir_all(&path).await?;
+        }
+        Storage::S3(ref _storage) => {
+            todo!("S3 storage");
         }
     }
 
@@ -114,7 +117,7 @@ pub async fn delete_user(
     let state = request.app_data::<AppState>().unwrap();
     let users = state.database.collection::<User>("users");
     let files = state.database.collection::<File>("files");
-    let storage = state.storage.module.clone();
+    let storage = state.storage.clone();
 
     let requester = users
         .find_one(doc! {"token": auth_token}, None)
@@ -156,7 +159,7 @@ pub async fn delete_user(
         }
 
         match storage {
-            StorageModule::Local(ref storage) => {
+            Storage::Local(ref storage) => {
                 let path = format!("{}/{}", storage, user._id.to_hex());
                 match tokio::fs::remove_dir_all(&path).await {
                     Ok(_) => {
@@ -167,6 +170,9 @@ pub async fn delete_user(
                             .body("There was an error deleting the user's storage"));
                     }
                 }
+            }
+            Storage::S3(ref _storage) => {
+                todo!("S3 storage");
             }
         };
     };
@@ -191,7 +197,7 @@ pub async fn delete_user(
     }
 
     match storage {
-        StorageModule::Local(ref storage) => {
+        Storage::Local(ref storage) => {
             let path = format!("{}/{}", storage, user._id.to_hex());
             match tokio::fs::remove_dir_all(&path).await {
                 Ok(_) => {
@@ -202,6 +208,9 @@ pub async fn delete_user(
                         .body("There was an error deleting the user's storage"));
                 }
             }
+        }
+        Storage::S3(ref _storage) => {
+            todo!("S3 storage");
         }
     };
 }

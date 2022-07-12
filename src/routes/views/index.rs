@@ -1,8 +1,8 @@
 use actix_web::{Error, HttpRequest, HttpResponse, Result};
 use futures_util::StreamExt;
 
-use crate::tera::Context;
 use crate::{structs::files::File, AppState};
+use tera::Context;
 
 /// Frontend index route
 pub async fn index(request: HttpRequest) -> Result<HttpResponse, Error> {
