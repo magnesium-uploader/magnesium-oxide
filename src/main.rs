@@ -22,8 +22,6 @@ use mongodb::{options::ClientOptions, Client, Database};
 use routes::{api::v1::files::*, api::v1::users::*, views::index::*};
 use tera::Tera;
 
-use crate::modules::storage::S3Options;
-
 lazy_static::lazy_static! {
     /// A struct containing all the templates used by Tera
     pub static ref TEMPLATES: Tera = {
@@ -96,13 +94,7 @@ async fn main() {
         storage = Storage::Local(config.storage.local.path.clone());
     } else {
         info!("Using S3 storage module");
-        storage = Storage::S3(S3Options {
-            bucket: config.storage.s3.bucket.clone(),
-            endpoint: config.storage.s3.endpoint.clone(),
-            region: config.storage.s3.region.clone(),
-            access_key: config.storage.s3.access_key.clone(),
-            secret_key: config.storage.s3.secret_key.clone(),
-        });
+        storage = Storage::S3(config.storage.s3.clone());
     }
 
     let state = AppState {

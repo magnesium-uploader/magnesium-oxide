@@ -1,20 +1,7 @@
 use bytes::Bytes;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-/// Options for using S3 compatible storage.
-#[derive(Clone, Debug)]
-pub struct S3Options {
-    /// The S3 bucket name.
-    pub bucket: String,
-    /// The S3 region.
-    pub region: String,
-    /// The S3 endpoint.
-    pub endpoint: String,
-    /// The S3 access key.
-    pub access_key: String,
-    /// The S3 secret key.
-    pub secret_key: String,
-}
+use super::config::S3StorageConfig;
 
 /// Enum storing the different types of storage modules.
 /// Possible values are:
@@ -25,7 +12,7 @@ pub enum Storage {
     /// The local storage module, used for storing files locally at the path specified in the enum.
     Local(String),
     /// The S3 storage module, used for storing files in S3. (TODO)
-    S3(S3Options),
+    S3(S3StorageConfig),
 }
 
 impl Storage {
