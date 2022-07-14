@@ -44,7 +44,7 @@ pub mod users {
         /// Email
         pub email: String,
         /// Hashed password
-        pub password: String, //? SHA3-512 hash
+        pub p_hash: String, //? ARGON2 hash
         /// Quota for the user
         pub quota: UserQuota,
         /// Privileges bitflags
@@ -68,7 +68,7 @@ pub mod users {
             User {
                 _id: ObjectId::new(),
                 username: username.into(),
-                password: hash_string(password.into()),
+                p_hash: password.into(),
                 email: email.into(),
                 quota: User::default_quota(),
                 token: hash_string(token.into()),
@@ -114,8 +114,8 @@ pub mod users {
     pub struct UserCreateRequest {
         /// The username of the user you are creating
         pub username: String,
-        /// The password of the user you are creating
-        pub password: String,
+        /// The hashed password of the user you are creating
+        pub p_hash: String,
         /// The email of the user you are creating
         pub email: String,
     }

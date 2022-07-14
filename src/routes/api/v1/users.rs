@@ -5,12 +5,16 @@ use actix_web::{
     Error, HttpRequest, HttpResponse, Result,
 };
 
+use argon2::{
+    password_hash::PasswordVerifier
+};
+
 use bson::{doc, oid::ObjectId};
 
 use serde_json::json;
 
 use crate::{
-    modules::storage::Storage,
+    modules::{storage::Storage, crypto::verify_syn_argon2},
     structs::{
         files::File,
         users::{User, UserCreateRequest, UserIdRequest},
@@ -29,8 +33,16 @@ pub async fn create_user(
     let users = state.database.collection::<User>("users");
     let storage = state.storage.clone();
 
+    match verify_syn_argon2(&data.p_hash) {
+        true => {}
+        false => {
+            return Ok(HttpResponse::BadRequest().body("p-hash is not valid"))
+        }
+    }
+
     let token = User::generate_token();
-    let user = User::from(&data.username, &data.password, &data.email, &token.clone());
+    
+    let user = User::from(&data.username, &data.p_hash, &data.email, &token.clone());
 
     let result = users.insert_one(&user, None).await;
 

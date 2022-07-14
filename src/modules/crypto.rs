@@ -4,6 +4,7 @@ use aes_gcm_siv::{
     aead::{Aead, NewAead},
     Aes256GcmSiv, Key, Nonce,
 };
+use regex::Regex;
 use bytes::{Bytes, BytesMut};
 use rand::{rngs::OsRng, Rng};
 use std::io::{Error, ErrorKind};
@@ -78,6 +79,12 @@ pub fn decrypt_bytes(
     };
 
     Ok(data_decrypt.freeze())
+}
+
+/// Argon2 syntax verification
+pub fn verify_syn_argon2<T: Into<String>>(input: T) -> bool {
+    let re = Regex::new(r"^\$argon2id\$v=\d+\$m=\d+\,t=\d+\,p=\d+\$[A-Za-z\d+/]{22}\$[A-Za-z\d+/]{22}$").unwrap();
+    re.is_match(input.into().as_str())
 }
 
 #[test]
