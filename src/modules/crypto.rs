@@ -8,11 +8,8 @@ use bytes::{Bytes, BytesMut};
 use rand::{rngs::OsRng, Rng};
 use std::io::{Error, ErrorKind};
 
-/// Encryption key struct for use in the crypto functions.
 pub struct EncryptionKey {
-    /// The encryption key.
     pub key: Vec<u8>,
-    /// The encryption nonce.
     pub nonce: Vec<u8>,
 }
 
@@ -26,7 +23,6 @@ impl Display for EncryptionKey {
     }
 }
 
-/// Generates a new EncryptionKey.
 pub fn generate_key() -> EncryptionKey {
     let mut rng = OsRng::default();
     let key: [u8; 32] = rng.gen();
@@ -38,7 +34,6 @@ pub fn generate_key() -> EncryptionKey {
     EncryptionKey { key, nonce }
 }
 
-/// Encrypts a Bytes object using the given EncryptionKey.
 pub fn encrypt_bytes(
     crypto: &EncryptionKey,
     data: &BytesMut,
@@ -59,7 +54,6 @@ pub fn encrypt_bytes(
     Ok(data_crypt.freeze())
 }
 
-/// Decrypts a Bytes object using the given EncryptionKey.
 pub fn decrypt_bytes(
     crypto: &EncryptionKey,
     data: &Bytes,

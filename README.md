@@ -11,7 +11,7 @@ Magnesium-Oxide (MGO) is a secure file uploader for ShareX.
 * 🔥 Blazingly fast uploads and encryption.
 * 💾 All files are encrypted with a random, secure key, and the key is never saved on the database.
 * 🔒 Encryption on all files uploaded using [AES256-GCM-SIV](https://eprint.iacr.org/2017/168.pdf).
-* 🦄 All functions are documented, and all code is written in Rust, no external linkages!
+* 🦄 All code is written in Rust, no external linkages!
 * ✨ Completely memory-safe, no need to worry about memory leaks using a global **`#![forbid(unsafe_code)]`** in [`src/main.rs`](https://github.com/magnesium-uploader/magnesium-oxide/blob/main/src/main.rs#L5).
 
 ## 🌌 Roadmap

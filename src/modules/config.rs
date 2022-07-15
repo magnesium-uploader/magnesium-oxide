@@ -1,80 +1,50 @@
 use serde::{Deserialize, Serialize};
-
 use std::io::Read;
 use std::io::Write;
-
 use toml;
 
-/// Databse configuration
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct DatabaseConfig {
-    /// MongoDB URI
     pub uri: String,
-    /// Database name
     pub db_name: String,
 }
 
-/// Application configuration
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
-    /// Server listening address
     pub host: String,
-    /// Server listening port
     pub port: u16,
 }
 
-/// Storage configuration for Local
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct LocalStorageConfig {
-    /// If true, the storage module will be used.
     pub enabled: bool,
-    /// The path where uploaded content will be stored
     pub path: String,
 }
 
-/// Storage configuration for S3
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct S3StorageConfig {
-    /// If true, the storage module will be used.
     pub enabled: bool,
-    /// The S3 bucket name
     pub bucket: String,
-    /// Endpoint of the S3 bucket
     pub endpoint: String,
-    /// Region of the S3 bucket
     pub region: String,
-    /// The S3 access key
     pub access_key: String,
-    /// The S3 secret key
     pub secret_key: String,
 }
 
-/// Storage configuration
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct StorageConfig {
-    /// Local storage configuration
     pub local: LocalStorageConfig,
-    /// S3 storage configuration
     pub s3: S3StorageConfig,
 }
 
-/// General configuration
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Config {
-    /// Server configuration
     pub server: ServerConfig,
-    /// Storage configuration
     pub storage: StorageConfig,
-    /// Database configuration
     pub database: DatabaseConfig,
 }
 
 impl Config {
-    /// Creates a new Config struct
-    /// # Arguments
-    /// * `server` - ServerConfig
-    /// * `storage` - StorageConfig
-    /// * `database` - DatabaseConfig
     pub fn new(server: ServerConfig, storage: StorageConfig, database: DatabaseConfig) -> Config {
         Config {
             server,
@@ -92,7 +62,6 @@ impl Config {
         toml::to_string(&self).unwrap()
     }
 
-    /// Loads the configuration from a file
     pub fn from_file(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
         let mut file = std::fs::File::open(path)?;
         let mut contents = String::new();
@@ -102,7 +71,6 @@ impl Config {
         Ok(config)
     }
 
-    /// Saves the configuration to a file
     pub fn to_file(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let mut file = std::fs::File::create(path)?;
         let toml = self.to_toml();
@@ -110,9 +78,6 @@ impl Config {
         Ok(())
     }
 
-    /// Creates a new Config at the given path, or loads it if it already exists
-    /// # Arguments
-    /// * `path` - Path to the config file
     pub fn get_or_create(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
         if std::path::Path::new(path).exists() {
             Config::from_file(path)

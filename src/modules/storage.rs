@@ -3,20 +3,13 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use super::config::S3StorageConfig;
 
-/// Enum storing the different types of storage modules.
-/// Possible values are:
-/// - `local`: Local storage module.
-/// - `s3`: S3 storage module. (TODO)
 #[derive(Clone, Debug)]
 pub enum Storage {
-    /// The local storage module, used for storing files locally at the path specified in the enum.
     Local(String),
-    /// The S3 storage module, used for storing files in S3. (TODO)
     S3(S3StorageConfig),
 }
 
 impl Storage {
-    /// Returns the path to the storage module.
     pub fn path(&self) -> Result<&str, &'static str> {
         match self {
             Storage::Local(path) => Ok(path),
@@ -25,7 +18,6 @@ impl Storage {
         }
     }
 
-    /// Gets the bytes of a file from the storage module.
     pub async fn get_file(
         &self,
         uid: &str,
@@ -45,7 +37,6 @@ impl Storage {
         }
     }
 
-    /// Saves a file to the storage module.
     pub async fn put_file(
         &self,
         uid: &str,
@@ -65,7 +56,6 @@ impl Storage {
         }
     }
 
-    /// Deletes a file from the storage module.
     pub async fn remove_file(
         &self,
         uid: &str,
@@ -83,7 +73,6 @@ impl Storage {
         }
     }
 
-    /// Checks if a file exists in the storage module.
     pub async fn exists(&self, uid: &str, hash: &str) -> bool {
         match self {
             Storage::Local(ref local) => {

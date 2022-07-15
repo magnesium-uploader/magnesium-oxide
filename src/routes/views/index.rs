@@ -4,11 +4,9 @@ use futures_util::StreamExt;
 use crate::{structs::files::File, AppState};
 use tera::Context;
 
-/// Frontend index route
 pub async fn index(request: HttpRequest) -> Result<HttpResponse, Error> {
     let state = request.app_data::<AppState>().unwrap();
 
-    // Get all file sizes from the database and add them up
     let mut total_size: i64 = 0;
     let mut total_files: i64 = 0;
 
@@ -16,7 +14,6 @@ pub async fn index(request: HttpRequest) -> Result<HttpResponse, Error> {
         let files = state.database.collection::<File>("files");
         let mut cursor = files.find(None, None).await.unwrap();
 
-        // TODO: Cache these results in a `meta` collection in the database.
         while let Some(file) = cursor.next().await {
             let file = file.unwrap();
 

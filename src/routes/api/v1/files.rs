@@ -25,7 +25,6 @@ use crate::{
     AppState,
 };
 
-/// Endpoint for uploading files.
 pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<HttpResponse> {
     let state = request.app_data::<AppState>().unwrap();
 
@@ -67,7 +66,6 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
     let mut file_mimetype = String::new();
     let mut file_bits = vec![];
 
-    // Retrieve the file from the multipart stream
     while let Some(mut field) = data.try_next().await.unwrap() {
         while let Some(chunk) = field.next().await {
             file_bits.extend_from_slice(&chunk?);
@@ -95,11 +93,6 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
             return Ok(HttpResponse::InternalServerError().body("Failed to encrypt file"));
         }
     };
-
-    // TODO: Enforce maximum upload size
-    // if file_size > state.config.max_file_size {
-    //     return Ok(HttpResponse::BadRequest().body("File is too large"));
-    // }
 
     if uploader.quota.used + file_size >= uploader.quota.available {
         return Ok(HttpResponse::BadRequest()
@@ -157,7 +150,6 @@ pub async fn upload_file(request: HttpRequest, mut data: Multipart) -> Result<Ht
     })));
 }
 
-/// Endpoint for deleting files from magnesium-oxide using ShareX
 pub async fn delete_file(
     request: HttpRequest,
     data: Query<FileDeleteRequest>,
@@ -196,7 +188,6 @@ pub async fn delete_file(
     Ok(HttpResponse::NoContent().body(""))
 }
 
-/// Endpoint for viewing files
 pub async fn get_file(
     request: HttpRequest,
     auth: Query<FileGetRequest>,

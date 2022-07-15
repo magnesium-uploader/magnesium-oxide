@@ -2,13 +2,10 @@
 //! A Rust ShareX uploader made from the ground up with security in mind, providing millitary-grade encryption and a high-level API for uploading files to the server.
 
 #![forbid(unsafe_code)]
-#![warn(missing_docs, unreachable_pub, unused_qualifications)]
+#![warn(unreachable_pub, unused_qualifications)]
 
-/// All modules used by the program
 pub mod modules;
-/// All routes used by the program
 pub mod routes;
-/// Common structs used by the program
 pub mod structs;
 
 use actix_web::{
@@ -23,7 +20,6 @@ use routes::{api::v1::files::*, api::v1::users::*, views::index::*};
 use tera::Tera;
 
 lazy_static::lazy_static! {
-    /// A struct containing all the templates used by Tera
     pub static ref TEMPLATES: Tera = {
         let tera = match Tera::new("templates/**/*") {
             Ok(t) => t,
@@ -36,16 +32,11 @@ lazy_static::lazy_static! {
     };
 }
 
-/// The actix_web AppState struct
 #[derive(Clone)]
 pub struct AppState {
-    /// The configuration refrenced in all routes
     pub config: Config,
-    /// The MongoDB Database refrenced in all routes
     pub database: Database,
-    /// Storage module refrenced in all routes
     pub storage: Storage,
-    /// The Tera template engine refrenced in all frontend routes
     pub tera: Tera,
 }
 

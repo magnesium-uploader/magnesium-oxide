@@ -6,7 +6,6 @@ use actix_web::{
 };
 
 use bson::{doc, oid::ObjectId};
-
 use serde_json::json;
 
 use crate::{
@@ -19,8 +18,6 @@ use crate::{
     AppState,
 };
 
-/// This endpoint creates a new user in the database and initializes their storage,
-/// the user is returned with a token that can be used for authorization in subsequent requests.
 pub async fn create_user(
     request: HttpRequest,
     data: Form<UserCreateRequest>,
@@ -51,7 +48,6 @@ pub async fn create_user(
     Ok(HttpResponse::Created().json(json!({ "token": token })))
 }
 
-/// This endpoint returns a user's information if the requestee has administrative privileges.
 pub async fn get_user(
     request: HttpRequest,
     data: Form<UserIdRequest>,
@@ -97,17 +93,13 @@ pub async fn get_user(
     Ok(HttpResponse::Ok().json(user.unwrap()))
 }
 
-/// This endpoint deletes a user from the database if one of the following conditions are met:
-/// 1. The requestee has administrative privileges.
-/// 2. The requestee is deleting their own account.
 ///
-/// **Note:** The user must specify a valid ObjectId and authorize with a valid token.
+
 pub async fn delete_user(
     request: HttpRequest,
     data: Form<UserIdRequest>,
     headers: &Header<AuthorizationHeader>,
 ) -> Result<HttpResponse, Error> {
-    // If there is no authorization header, return unauthorized
     if headers.authorization.is_none() {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
@@ -141,8 +133,6 @@ pub async fn delete_user(
 
     let user = user.unwrap();
 
-    // check if the user to be deleted is the same user as the requester
-    // if so, the user is deleting themselves, so no need to check for privileges
     if requester._id.to_hex() == user._id.to_hex() {
         let user_result = users.delete_one(doc! {"_id": user._id}, None).await;
 
@@ -177,7 +167,6 @@ pub async fn delete_user(
         };
     };
 
-    // If the user is not the same user as the requester, check if the requester has admin privileges
     if !requester.privileges.contains(Privileges::ADMIN) {
         return Ok(HttpResponse::Forbidden().body("Forbidden"));
     }
