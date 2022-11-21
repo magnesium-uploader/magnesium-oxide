@@ -31,7 +31,7 @@ jobs:
 
       # Load any cache stored by rust-cache.
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
-        uses: Swatinem/rust-cache@v1
+        uses: Swatinem/rust-cache@v2
 
       # Run cargo build (for release)
       - if: ${{ steps.changelog.outputs.skipped == 'false' }}
