@@ -15,7 +15,7 @@ bytes = { version = "1.1.0", features = ["serde"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 env_logger = "0.10.0"
 futures-util = { version = "0.3.21", features = ["tokio-io"] }
-rust-s3 = { version = "0.31.0", features = ["tokio-rustls-tls", "no-verify-ssl"], default-features = false }
+rust-s3 = { version = "0.32.3", features = ["tokio-rustls-tls", "no-verify-ssl"], default-features = false }
 lazy_static = "1.4.0"
 log = "0.4.17"
 mongodb = "2.2.2"
